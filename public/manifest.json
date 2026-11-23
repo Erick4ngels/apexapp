@@ -1,10 +1,10 @@
 {
   "name": "APEX - Ecosistema Automotriz",
-  "short_name": "ÁPEX",
+  "short_name": "APEX",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d0d",
-  "theme_color": "#0d0d0d",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
   "icons": [
     {
       "src": "/2026-11-22%2018.51.16.jpg",
