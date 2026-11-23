@@ -14,12 +14,10 @@ import {
   Truck,
   MapPin,
   CreditCard,
-  Sparkles,
   Package,
   Droplets,
   Wrench,
   Ticket,
-  Car,
   QrCode,
   Smartphone,
   Download,
@@ -45,13 +43,19 @@ import {
   Handshake,
   ChevronRight,
   Star,
-  Check,
   Eye,
-  EyeOff
+  EyeOff,
+  MessageCircle,
+  Mail,
+  Users,
+  Gift,
+  Rocket,
+  AlertTriangle,
+  Copy
 } from 'lucide-react';
 
 // --- CLAVE DE PERSISTENCIA ---
-const STORAGE_KEY = 'apex_ecosystem_full_v4';
+const STORAGE_KEY = 'apex_ecosystem_full_v5';
 
 // --- FOTOS DE RESPALDO / PRESETS ---
 const PRESET_PHOTOS = [
@@ -92,13 +96,13 @@ const SPONSOR_PACKAGES = [
     id: 'pkg-1',
     name: 'Pack Banner en Tienda - 15 días',
     price: '$45 / quincena',
-    detail: 'Tarjeta patrocinada dentro del catálogo principal + enlace directo.'
+    detail: 'Banner visible en todos los apartados + tarjeta destacada en catálogo.'
   },
   {
     id: 'pkg-2',
-    name: 'Pack Destacado + Evento Tuning - 30 días',
+    name: 'Pack Lanzamiento + Evento Tuning - 30 días',
     price: '$95 / mes',
-    detail: 'Presencia en Tienda, mención en Eventos & Válidas y sello Patrocinante.'
+    detail: 'Aviso de lanzamiento, presencia en válidas y sello Patrocinante.'
   },
   {
     id: 'pkg-3',
@@ -277,17 +281,21 @@ const INITIAL_ADS = [
     image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80',
     ctaText: 'Ver Aliado',
     targetSection: 'allies',
+    isLaunch: false,
+    launchNote: '',
     active: true
   },
   {
     id: 'ad-2',
-    advertiser: 'Copa Tuning & Piques Maracay',
-    tag: 'Patrocinado • Evento Oficial',
-    title: 'Inscripciones Abiertas • 4ta Válida Nocturna',
-    description: 'Transmisión en vivo y exhibición multimarca patrocinada por Ápex.',
+    advertiser: 'Copa Tuning & Piques',
+    tag: 'Lanzamiento Oficial',
+    title: 'Preventa de Entradas y Pits • 4ta Válida Nocturna',
+    description: 'Lanzamiento oficial del cronograma y exhibición multimarca con Ápex.',
     image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80',
     ctaText: 'Ver Evento',
     targetSection: 'events',
+    isLaunch: true,
+    launchNote: '¡Nuevo lanzamiento! Cupos de exhibición y carril habilitados.',
     active: true
   }
 ];
@@ -333,7 +341,7 @@ const INITIAL_ALLIES = [
     brandName: 'Rines & Suspensión ApexGrip',
     modality: 'Patrocinante (Paquetes Publicitarios)',
     category: 'Tienda de Repuestos/Accesorios',
-    packagePlan: 'Pack Destacado + Evento Tuning - 30 días',
+    packagePlan: 'Pack Lanzamiento + Evento Tuning - 30 días',
     contactName: 'Laura Méndez',
     phone: '+58 414-3321098',
     email: 'contacto@apexgrip.com',
@@ -347,6 +355,9 @@ const INITIAL_USERS = [
     id: 'usr-1',
     name: 'Carlos Mendoza',
     email: 'carlos@cliente.com',
+    emailVerified: true,
+    verificationCode: '482910',
+    referralCode: 'CARLOS-APEX',
     phone: '+58 412-5550192',
     password: '123',
     address: 'Urb. El Castaño, Av. Principal, Casa #14',
@@ -359,6 +370,9 @@ const INITIAL_USERS = [
     id: 'usr-2',
     name: 'Lubricentro & Taller TurboPro',
     email: 'ventas@turbopro.com',
+    emailVerified: true,
+    verificationCode: '910345',
+    referralCode: 'TURBO-APEX',
     phone: '+58 414-8884321',
     password: '123',
     address: 'Av. Bolívar Oeste, Local 8-B, Zona Industrial',
@@ -369,7 +383,7 @@ const INITIAL_USERS = [
   }
 ];
 
-const REWARDS_CATALOG = [
+const INITIAL_REWARDS = [
   {
     id: 'rew-1',
     title: 'Cupón 10% OFF Extra',
@@ -377,7 +391,8 @@ const REWARDS_CATALOG = [
     cost: 300,
     type: 'discount',
     discountPercent: 10,
-    code: 'APEX10EXTRA'
+    code: 'APEX10EXTRA',
+    active: true
   },
   {
     id: 'rew-2',
@@ -385,7 +400,8 @@ const REWARDS_CATALOG = [
     description: 'Canjea una botella de Ápex Boost 350ml en tu próximo envío.',
     cost: 550,
     type: 'gift',
-    code: 'BOOST-FREE'
+    code: 'BOOST-FREE',
+    active: true
   },
   {
     id: 'rew-3',
@@ -394,9 +410,19 @@ const REWARDS_CATALOG = [
     cost: 850,
     type: 'discount_fixed',
     discountAmount: 15,
-    code: 'APEX15USD'
+    code: 'APEX15USD',
+    active: true
   }
 ];
+
+function normalizeWhatsAppNumber(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (!digits) return '584141470773';
+  if (digits.startsWith('0')) {
+    return `58${digits.slice(1)}`;
+  }
+  return digits;
+}
 
 function loadSavedData() {
   try {
@@ -410,14 +436,16 @@ function loadSavedData() {
 export default function App() {
   const saved = useMemo(() => loadSavedData(), []);
 
-  // --- CONFIGURACIÓN DE MARCA ---
+  // --- CONFIGURACIÓN DE MARCA Y WHATSAPP TÉCNICO ---
   const [brandConfig, setBrandConfig] = useState(
     saved?.brandConfig || {
       name: 'ÁPEX',
       tagline: 'Refrigerantes • Lubricantes • Ecosistema Motor',
       logoUrl: '',
-      adminPin: '1234',
-      pointsPerDollar: 5
+      adminPin: '2026',
+      pointsPerDollar: 5,
+      referralBonusPoints: 150,
+      techSupportWhatsapp: '04141470773'
     }
   );
 
@@ -430,6 +458,7 @@ export default function App() {
   const [ads, setAds] = useState(saved?.ads || INITIAL_ADS);
   const [events, setEvents] = useState(saved?.events || INITIAL_EVENTS);
   const [allies, setAllies] = useState(saved?.allies || INITIAL_ALLIES);
+  const [rewardsCatalog, setRewardsCatalog] = useState(saved?.rewardsCatalog || INITIAL_REWARDS);
   const [cart, setCart] = useState(saved?.cart || [{ productId: 'prod-1', quantity: 1 }]);
   const [redeemedRewards, setRedeemedRewards] = useState(saved?.redeemedRewards || []);
   const [ordersHistory, setOrdersHistory] = useState(
@@ -473,6 +502,7 @@ export default function App() {
           ads,
           events,
           allies,
+          rewardsCatalog,
           cart,
           redeemedRewards,
           ordersHistory,
@@ -480,7 +510,7 @@ export default function App() {
         })
       );
     } catch {
-      // Fallback silencioso en memoria si localStorage no está disponible
+      // Fallback silencioso en memoria
     }
   }, [
     brandConfig,
@@ -490,6 +520,7 @@ export default function App() {
     ads,
     events,
     allies,
+    rewardsCatalog,
     cart,
     redeemedRewards,
     ordersHistory,
@@ -509,10 +540,21 @@ export default function App() {
   // --- NAVEGACIÓN ---
   // 'store' | 'cart' | 'rewards' | 'profile' | 'more'
   const [activeTab, setActiveTab] = useState('store');
-  // Subvistas dentro de 'more': 'hub' | 'events' | 'allies' | 'qr' | 'admin'
+  // Subvistas dentro de 'more': 'hub' | 'support' | 'events' | 'allies' | 'qr' | 'admin'
   const [moreView, setMoreView] = useState('hub');
-  // Sub-pestañas de Admin: 'products' | 'ads' | 'allies' | 'events' | 'users' | 'brand'
+  // Sub-pestañas de Admin: 'products' | 'ads' | 'allies' | 'events' | 'rewards' | 'users' | 'brand'
   const [adminTab, setAdminTab] = useState('products');
+
+  // --- BANNER GLOBAL Y LANZAMIENTOS ---
+  const [dismissedBannerId, setDismissedBannerId] = useState(null);
+  const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
+
+  // --- ASESORÍA TÉCNICA POR WHATSAPP ---
+  const [supportForm, setSupportForm] = useState({
+    vehicle: '',
+    issueType: 'Temperatura / Refrigerante',
+    description: ''
+  });
 
   // --- ESTADOS DE TIENDA ---
   const [searchQuery, setSearchQuery] = useState('');
@@ -537,7 +579,7 @@ export default function App() {
     notes: ''
   });
 
-  // --- AUTENTICACIÓN Y PERFIL ---
+  // --- AUTENTICACIÓN, VERIFICACIÓN DE CORREO Y REFERIDOS ---
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -548,8 +590,10 @@ export default function App() {
     password: '',
     address: '',
     accountType: 'consumer',
-    vipCode: ''
+    vipCode: '',
+    referredBy: ''
   });
+  const [verifyCodeInput, setVerifyCodeInput] = useState('');
   const [editingAddress, setEditingAddress] = useState(false);
   const [addressDraft, setAddressDraft] = useState('');
 
@@ -570,9 +614,12 @@ export default function App() {
     vehicleInfo: ''
   });
 
-  // --- ADMIN ---
+  // --- ADMIN (SIN BOTÓN NI PISTA DE PIN 1234) ---
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [pinInput, setPinInput] = useState('');
+  const [failedPinAttempts, setFailedPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(0);
+
   const [editingProductId, setEditingProductId] = useState(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [productForm, setProductForm] = useState({
@@ -601,7 +648,9 @@ export default function App() {
     description: '',
     image: PRESET_PHOTOS[4].url,
     ctaText: 'Conocer Más',
-    targetSection: 'allies'
+    targetSection: 'allies',
+    isLaunch: false,
+    launchNote: ''
   });
 
   const [newEventForm, setNewEventForm] = useState({
@@ -612,6 +661,26 @@ export default function App() {
     status: 'PRÓXIMO EVENTO',
     sponsorsText: 'Ápex Lubricantes',
     description: ''
+  });
+
+  const [newAllyForm, setNewAllyForm] = useState({
+    brandName: '',
+    category: 'Herramientas',
+    packagePlan: SPONSOR_PACKAGES[2].name,
+    contactName: '',
+    phone: '',
+    email: '',
+    notes: ''
+  });
+
+  const [newRewardForm, setNewRewardForm] = useState({
+    title: '',
+    description: '',
+    cost: '400',
+    type: 'discount',
+    discountPercent: '15',
+    discountAmount: '10',
+    code: 'APEXVIP'
   });
 
   // --- TOAST ---
@@ -664,6 +733,26 @@ export default function App() {
     };
   }, [lifetimePoints]);
 
+  // --- ANUNCIOS ACTIVOS Y LANZAMIENTOS ---
+  const activeAds = useMemo(() => ads.filter((a) => a.active), [ads]);
+  const activeLaunches = useMemo(() => activeAds.filter((a) => a.isLaunch), [activeAds]);
+  const currentMiniBanner = useMemo(() => {
+    if (activeAds.length === 0) return null;
+    const candidate = activeAds[currentBannerIdx % activeAds.length];
+    if (candidate.id === dismissedBannerId) {
+      return activeAds.find((a) => a.id !== dismissedBannerId) || null;
+    }
+    return candidate;
+  }, [activeAds, currentBannerIdx, dismissedBannerId]);
+
+  useEffect(() => {
+    if (activeAds.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentBannerIdx((prev) => prev + 1);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [activeAds.length]);
+
   // --- FILTRADO DE TIENDA ---
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -677,8 +766,6 @@ export default function App() {
     });
   }, [products, selectedCategory, selectedUsage, searchQuery]);
 
-  const activeAds = useMemo(() => ads.filter((a) => a.active), [ads]);
-
   const comparedProducts = useMemo(
     () => compareIds.map((id) => products.find((p) => p.id === id)).filter(Boolean),
     [compareIds, products]
@@ -689,7 +776,7 @@ export default function App() {
     [products, selectedQrProductId]
   );
 
-  // --- ACCIONES DE USUARIO ---
+  // --- ACCIONES DE USUARIO, VERIFICACIÓN DE CORREO Y REFERIDOS ---
   const handleRegister = (e) => {
     e.preventDefault();
     if (!registerForm.name.trim() || !registerForm.email.trim() || !registerForm.password.trim()) {
@@ -700,25 +787,46 @@ export default function App() {
       showToast('Ese correo ya está registrado', 'error');
       return;
     }
+
     const wantsDealer = registerForm.accountType === 'dealer';
     const hasVip = registerForm.vipCode.trim().toUpperCase() === 'APEXPRO';
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const cleanNameSlug = registerForm.name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6) || 'APEX';
+    const refCode = `${cleanNameSlug}-${Math.floor(10 + Math.random() * 89)}`;
+
+    const referrerInput = registerForm.referredBy.trim().toUpperCase();
+    const validReferrer = referrerInput
+      ? users.find((u) => u.referralCode.toUpperCase() === referrerInput)
+      : null;
+
+    const bonusPts = brandConfig.referralBonusPoints || 150;
+    const initialPts = validReferrer ? 200 + bonusPts : 200;
 
     const newUser = {
       id: `usr-${Date.now()}`,
       name: registerForm.name.trim(),
       email: registerForm.email.trim(),
+      emailVerified: false,
+      verificationCode: code,
+      referralCode: refCode,
+      referredByCode: validReferrer ? validReferrer.referralCode : '',
       phone: registerForm.phone.trim() || '+58 412-0000000',
       password: registerForm.password.trim(),
       address: registerForm.address.trim() || 'Dirección por definir',
       role: wantsDealer ? 'dealer' : 'consumer',
       dealerStatus: wantsDealer ? (hasVip ? 'approved' : 'pending') : 'none',
-      points: 200,
-      lifetimePoints: 200
+      points: initialPts,
+      lifetimePoints: initialPts
     };
 
     setUsers((prev) => [newUser, ...prev]);
     setCurrentUserId(newUser.id);
     setAuthModalOpen(false);
+    setActiveTab('profile');
     setRegisterForm({
       name: '',
       email: '',
@@ -726,12 +834,44 @@ export default function App() {
       password: '',
       address: '',
       accountType: 'consumer',
-      vipCode: ''
+      vipCode: '',
+      referredBy: ''
     });
+    showToast(`Cuenta creada • Código de correo: ${code}`);
+  };
+
+  const handleVerifyEmail = (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    if (verifyCodeInput.trim() !== currentUser.verificationCode) {
+      showToast('Código de verificación incorrecto', 'error');
+      return;
+    }
+
+    const bonusPts = brandConfig.referralBonusPoints || 150;
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === currentUser.id) {
+          return { ...u, emailVerified: true };
+        }
+        if (
+          currentUser.referredByCode &&
+          u.referralCode.toUpperCase() === currentUser.referredByCode.toUpperCase()
+        ) {
+          return {
+            ...u,
+            points: u.points + bonusPts,
+            lifetimePoints: u.lifetimePoints + bonusPts
+          };
+        }
+        return u;
+      })
+    );
+    setVerifyCodeInput('');
     showToast(
-      wantsDealer && !hasVip
-        ? 'Cuenta creada • Comercializador pendiente de aprobación'
-        : `¡Bienvenido ${newUser.name}! +200 pts de bienvenida`
+      currentUser.referredByCode
+        ? `Correo verificado • +${bonusPts} pts enviados a tu recomendador`
+        : 'Correo electrónico verificado'
     );
   };
 
@@ -756,6 +896,26 @@ export default function App() {
     setCurrentUserId(null);
     setAppliedCoupon(null);
     showToast('Sesión cerrada');
+  };
+
+  // --- ASESORÍA TÉCNICA POR WHATSAPP (04141470773) ---
+  const handleSendWhatsAppSupport = (e) => {
+    e.preventDefault();
+    if (!supportForm.vehicle.trim() || !supportForm.description.trim()) {
+      showToast('Indica el vehículo y qué falla presenta', 'error');
+      return;
+    }
+    const targetWa = normalizeWhatsAppNumber(brandConfig.techSupportWhatsapp);
+    const lines = [
+      `Hola equipo ${brandConfig.name}, necesito asesoría técnica:`,
+      `• Cliente: ${currentUser ? currentUser.name : 'Visitante / No registrado'}`,
+      `• Vehículo: ${supportForm.vehicle.trim()}`,
+      `• Área: ${supportForm.issueType}`,
+      `• Detalle: ${supportForm.description.trim()}`
+    ];
+    const url = `https://wa.me/${targetWa}?text=${encodeURIComponent(lines.join('\n'))}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    showToast('Abriendo WhatsApp de asesoría técnica...');
   };
 
   // --- SOLICITUD PATROCINANTE / ALIADO ---
@@ -1193,7 +1353,7 @@ export default function App() {
     setProductModalOpen(false);
   };
 
-  // --- ADMIN: ANUNCIOS INTERNOS ---
+  // --- ADMIN: ANUNCIOS Y LANZAMIENTOS ---
   const handleCreateAd = (e) => {
     e.preventDefault();
     if (!newAdForm.advertiser.trim() || !newAdForm.title.trim()) {
@@ -1207,10 +1367,14 @@ export default function App() {
         advertiser: newAdForm.advertiser.trim(),
         title: newAdForm.title.trim(),
         description: newAdForm.description.trim() || 'Patrocinador oficial del ecosistema Ápex.',
+        launchNote: newAdForm.isLaunch
+          ? newAdForm.launchNote.trim() || `Lanzamiento oficial de ${newAdForm.advertiser.trim()}`
+          : '',
         active: true
       },
       ...prev
     ]);
+    setDismissedBannerId(null);
     setNewAdForm({
       advertiser: '',
       tag: 'Patrocinado • Ecosistema Ápex',
@@ -1218,9 +1382,11 @@ export default function App() {
       description: '',
       image: PRESET_PHOTOS[4].url,
       ctaText: 'Conocer Más',
-      targetSection: 'allies'
+      targetSection: 'allies',
+      isLaunch: false,
+      launchNote: ''
     });
-    showToast('Campaña publicitaria publicada');
+    showToast('Anuncio / lanzamiento publicado en toda la app');
   };
 
   // --- ADMIN: EVENTOS & VÁLIDAS ---
@@ -1257,6 +1423,74 @@ export default function App() {
       description: ''
     });
     showToast('Evento agregado a cartelera');
+  };
+
+  // --- ADMIN: INCLUIR ALIADO DIRECTO ---
+  const handleAddAllyDirect = (e) => {
+    e.preventDefault();
+    if (!newAllyForm.brandName.trim() || !newAllyForm.phone.trim()) {
+      showToast('Completa nombre de marca y teléfono', 'error');
+      return;
+    }
+    setAllies((prev) => [
+      {
+        id: `ally-${Date.now()}`,
+        brandName: newAllyForm.brandName.trim(),
+        modality: 'Aliado Comercial',
+        category: newAllyForm.category,
+        packagePlan: newAllyForm.packagePlan,
+        contactName: newAllyForm.contactName.trim() || 'Representante Comercial',
+        phone: newAllyForm.phone.trim(),
+        email: newAllyForm.email.trim() || 'aliado@apex.com',
+        notes: newAllyForm.notes.trim() || 'Aliado verificado del ecosistema Ápex.',
+        status: 'approved'
+      },
+      ...prev
+    ]);
+    setNewAllyForm({
+      brandName: '',
+      category: 'Herramientas',
+      packagePlan: SPONSOR_PACKAGES[2].name,
+      contactName: '',
+      phone: '',
+      email: '',
+      notes: ''
+    });
+    showToast('Aliado incluido en el directorio');
+  };
+
+  // --- ADMIN: INCLUIR RECOMPENSA ---
+  const handleAddReward = (e) => {
+    e.preventDefault();
+    if (!newRewardForm.title.trim() || !newRewardForm.cost) {
+      showToast('Completa título y costo en puntos', 'error');
+      return;
+    }
+    setRewardsCatalog((prev) => [
+      {
+        id: `rew-${Date.now()}`,
+        title: newRewardForm.title.trim(),
+        description:
+          newRewardForm.description.trim() || 'Beneficio canjeable con tus puntos Ápex.',
+        cost: Math.max(50, parseInt(newRewardForm.cost, 10) || 300),
+        type: newRewardForm.type,
+        discountPercent: parseInt(newRewardForm.discountPercent || '10', 10),
+        discountAmount: parseInt(newRewardForm.discountAmount || '10', 10),
+        code: (newRewardForm.code.trim() || 'APEXPREMIO').toUpperCase(),
+        active: true
+      },
+      ...prev
+    ]);
+    setNewRewardForm({
+      title: '',
+      description: '',
+      cost: '400',
+      type: 'discount',
+      discountPercent: '15',
+      discountAmount: '10',
+      code: 'APEXVIP'
+    });
+    showToast('Recompensa agregada');
   };
 
   // --- RENDERIZADO DE FOTO CON FALLBACK AUTOMÁTICO ---
@@ -1300,13 +1534,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 flex flex-col items-center justify-center p-0 sm:p-6 font-sans selection:bg-orange-500 selection:text-white">
-      {/* Marco Móvil Limpio */}
       <div className="w-full sm:w-[412px] h-screen sm:h-[836px] bg-[#0A0A0C] sm:rounded-[2.75rem] sm:border sm:border-zinc-800/90 shadow-2xl flex flex-col overflow-hidden relative">
-        
         {/* =========================================================
-            1. ENCABEZADO COMPACTO Y AIREADO
+            1. ENCABEZADO COMPACTO
         ========================================================= */}
-        <header className="px-5 pt-5 pb-3.5 bg-[#0A0A0C]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-20">
+        <header className="px-5 pt-4 pb-2.5 bg-[#0A0A0C]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-20">
           <div className="flex items-center gap-2.5 min-w-0">
             {brandConfig.logoUrl ? (
               <img
@@ -1361,9 +1593,71 @@ export default function App() {
           </div>
         </header>
 
+        {/* =========================================================
+            2. BANNER MINIATURA GLOBAL + AVISO DE LANZAMIENTOS
+        ========================================================= */}
+        {(currentMiniBanner || activeLaunches.length > 0) && (
+          <div className="px-5 pb-2 space-y-1.5 shrink-0 z-20">
+            {activeLaunches.length > 0 && (
+              <button
+                onClick={() => {
+                  setActiveTab('more');
+                  setMoreView(activeLaunches[0].targetSection || 'events');
+                }}
+                className="w-full bg-amber-500/15 border border-amber-400/35 rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 text-left"
+              >
+                <span className="text-[10px] font-extrabold text-amber-300 flex items-center gap-1.5 truncate">
+                  <Rocket className="w-3 h-3 shrink-0" />
+                  <span className="truncate">
+                    {activeLaunches[0].launchNote ||
+                      `Lanzamiento de ${activeLaunches[0].advertiser}: ${activeLaunches[0].title}`}
+                  </span>
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              </button>
+            )}
+
+            {currentMiniBanner && (
+              <div className="bg-[#141418] border border-zinc-800/90 rounded-2xl p-1.5 pr-2.5 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => {
+                    setActiveTab('more');
+                    setMoreView(currentMiniBanner.targetSection || 'allies');
+                  }}
+                  className="flex items-center gap-2.5 min-w-0 flex-1 text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-950 shrink-0">
+                    {renderPhoto(
+                      `mini-${currentMiniBanner.id}`,
+                      currentMiniBanner.image,
+                      currentMiniBanner.title,
+                      'w-10 h-10'
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-extrabold text-orange-400 uppercase block truncate">
+                      {currentMiniBanner.advertiser}
+                    </span>
+                    <p className="text-[11px] font-bold text-white truncate">
+                      {currentMiniBanner.title}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setDismissedBannerId(currentMiniBanner.id)}
+                  className="p-1 text-zinc-500 hover:text-zinc-300 shrink-0"
+                  title="Ocultar anuncio"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* --- TOAST NOTIFICACIÓN --- */}
         {toast && (
-          <div className="absolute top-16 left-5 right-5 z-50 pointer-events-none flex justify-center">
+          <div className="absolute top-20 left-5 right-5 z-50 pointer-events-none flex justify-center">
             <div
               className={`px-4 py-2 rounded-full shadow-xl border text-xs font-semibold flex items-center gap-2 ${
                 toast.type === 'error'
@@ -1382,16 +1676,14 @@ export default function App() {
         )}
 
         {/* =========================================================
-            CONTENIDO PRINCIPAL ESPACIADO
+            CONTENIDO PRINCIPAL
         ========================================================= */}
         <main className="flex-1 overflow-y-auto px-5 pt-2 pb-28 space-y-6">
-          
           {/* =========================================================
               PESTAÑA 1: TIENDA
           ========================================================= */}
           {activeTab === 'store' && (
             <>
-              {/* Buscador + Filtros + Comparador */}
               <div className="space-y-3.5">
                 <div className="flex items-center gap-2.5">
                   <div className="relative flex-1">
@@ -1428,7 +1720,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Panel discreto de filtros por uso */}
                 {showFilters && (
                   <div className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 space-y-2.5">
                     <span className="text-[11px] font-bold text-zinc-400 block">
@@ -1452,7 +1743,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Pills de categorías */}
                 <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                   {CATEGORIES.map((cat) => (
                     <button
@@ -1470,7 +1760,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Feed de Productos + Publicidad Interna cada 3 productos */}
               <div className="space-y-5">
                 {filteredProducts.length === 0 ? (
                   <div className="text-center py-14 space-y-2">
@@ -1480,7 +1769,6 @@ export default function App() {
                 ) : (
                   filteredProducts.map((product, index) => {
                     const pricing = getProductPricing(product);
-                    // Inserta un anuncio interno propio después del 3er producto
                     const adToShow =
                       index === 2 && activeAds.length > 0 ? activeAds[0] : null;
 
@@ -1558,7 +1846,6 @@ export default function App() {
                           </div>
                         </article>
 
-                        {/* Tarjeta de Publicidad Interna Propia */}
                         {adToShow && (
                           <div className="bg-[#141418] border border-orange-500/25 rounded-3xl overflow-hidden">
                             <div className="relative h-32 bg-zinc-950">
@@ -1596,7 +1883,6 @@ export default function App() {
                   })
                 )}
 
-                {/* Banner Elegante al final del Feed: Quiero ser Patrocinante / Aliado */}
                 <div className="bg-gradient-to-br from-[#141418] to-zinc-900 border border-zinc-800 rounded-3xl p-5 space-y-3">
                   <div className="flex items-center gap-2 text-orange-400">
                     <Handshake className="w-4 h-4" />
@@ -1608,7 +1894,7 @@ export default function App() {
                     ¿Vendes herramientas, tienes tienda o quieres patrocinar válidas?
                   </h3>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    Únete como aliado comercial o contrata paquetes publicitarios internos dentro de nuestra comunidad.
+                    Únete como aliado comercial o contrata paquetes publicitarios y lanzamientos dentro de nuestra comunidad.
                   </p>
                   <button
                     onClick={() => openSponsorModal('Patrocinante (Paquetes Publicitarios)')}
@@ -1697,7 +1983,6 @@ export default function App() {
                     })}
                   </div>
 
-                  {/* Cupones disponibles */}
                   {userCoupons.filter((r) => r.type.startsWith('discount')).length > 0 && (
                     <div className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 space-y-2.5">
                       <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
@@ -1726,7 +2011,6 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Entrega */}
                   <div className="bg-[#141418] border border-zinc-800/80 rounded-2xl p-4 space-y-3.5">
                     <span className="text-xs font-bold text-zinc-300 block">Modalidad de Entrega</span>
                     <div className="grid grid-cols-2 gap-2.5">
@@ -1775,7 +2059,6 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Método de pago */}
                   <div className="bg-[#141418] border border-zinc-800/80 rounded-2xl p-4 space-y-3">
                     <span className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
                       <CreditCard className="w-3.5 h-3.5 text-orange-400" /> Método de Pago
@@ -1797,7 +2080,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Resumen final */}
                   <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-3">
                     {cartSummary.roleDiscountTotal > 0 && (
                       <div className="flex justify-between text-xs text-emerald-400">
@@ -1846,7 +2128,7 @@ export default function App() {
           )}
 
           {/* =========================================================
-              PESTAÑA 3: PREMIOS Y FIDELIZACIÓN
+              PESTAÑA 3: PREMIOS Y FIDELIZACIÓN + REFERIDOS
           ========================================================= */}
           {activeTab === 'rewards' && (
             <div className="space-y-6">
@@ -1854,9 +2136,11 @@ export default function App() {
                 <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 text-center space-y-4">
                   <Award className="w-10 h-10 text-amber-400 mx-auto" />
                   <div>
-                    <h2 className="text-base font-black text-white">Club de Puntos {brandConfig.name}</h2>
+                    <h2 className="text-base font-black text-white">
+                      Club de Puntos {brandConfig.name}
+                    </h2>
                     <p className="text-xs text-zinc-400 mt-1">
-                      Acumula puntos con cada refrigerante, lubricante o limpiador y canjéalos por cupones o productos gratis.
+                      Acumula puntos con cada compra, garantía o recomendado y canjéalos por cupones o premios.
                     </p>
                   </div>
                   <button
@@ -1870,35 +2154,58 @@ export default function App() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[11px] text-zinc-400 block">Nivel Actual</span>
-                      <h2 className="text-lg font-black text-white mt-0.5">{userTier.name}</h2>
+                <>
+                  <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[11px] text-zinc-400 block">Nivel Actual</span>
+                        <h2 className="text-lg font-black text-white mt-0.5">{userTier.name}</h2>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] text-zinc-400 block">Disponibles</span>
+                        <span className="text-2xl font-black text-amber-400">
+                          {currentUser.points.toLocaleString()}{' '}
+                          <span className="text-xs font-bold">pts</span>
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[11px] text-zinc-400 block">Disponibles</span>
-                      <span className="text-2xl font-black text-amber-400">
-                        {currentUser.points.toLocaleString()}{' '}
-                        <span className="text-xs font-bold">pts</span>
-                      </span>
+
+                    <div className="space-y-1.5">
+                      <div className="w-full h-2 bg-[#0A0A0C] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                          style={{ width: `${userTier.progress}%` }}
+                        />
+                      </div>
+                      {userTier.next && (
+                        <span className="text-[11px] text-zinc-500 block text-right">
+                          Siguiente nivel: {userTier.next}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="w-full h-2 bg-[#0A0A0C] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                        style={{ width: `${userTier.progress}%` }}
-                      />
-                    </div>
-                    {userTier.next && (
-                      <span className="text-[11px] text-zinc-500 block text-right">
-                        Siguiente nivel: {userTier.next}
+                  {/* Tarjeta de Puntos por Recomendación */}
+                  <div className="bg-[#141418] border border-amber-500/25 rounded-3xl p-4 flex items-center justify-between gap-3">
+                    <div className="min-w-0 space-y-0.5">
+                      <span className="text-[10px] font-extrabold text-amber-400 uppercase flex items-center gap-1">
+                        <Users className="w-3 h-3" /> Recomienda y Gana +{brandConfig.referralBonusPoints} pts
                       </span>
-                    )}
+                      <p className="text-xs font-mono font-bold text-white truncate">
+                        Código: {currentUser.referralCode}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(currentUser.referralCode);
+                        showToast('Código de referido copiado');
+                      }}
+                      className="px-3 py-2 rounded-xl bg-[#0A0A0C] border border-zinc-700 text-xs font-bold text-white flex items-center gap-1 shrink-0"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-orange-400" /> Copiar
+                    </button>
                   </div>
-                </div>
+                </>
               )}
 
               {userCoupons.length > 0 && (
@@ -1934,41 +2241,43 @@ export default function App() {
 
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-zinc-400">Recompensas Disponibles</h3>
-                {REWARDS_CATALOG.map((reward) => {
-                  const canAfford = currentUser && currentUser.points >= reward.cost;
-                  return (
-                    <div
-                      key={reward.id}
-                      className="bg-[#141418] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between gap-4"
-                    >
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-extrabold text-amber-400">
-                          {reward.cost} pts
-                        </span>
-                        <h4 className="text-sm font-bold text-white">{reward.title}</h4>
-                        <p className="text-xs text-zinc-400 leading-relaxed">
-                          {reward.description}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleRedeemReward(reward)}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition ${
-                          canAfford
-                            ? 'bg-white text-zinc-950 hover:bg-zinc-200'
-                            : 'bg-[#0A0A0C] text-zinc-500 border border-zinc-800'
-                        }`}
+                {rewardsCatalog
+                  .filter((r) => r.active !== false)
+                  .map((reward) => {
+                    const canAfford = currentUser && currentUser.points >= reward.cost;
+                    return (
+                      <div
+                        key={reward.id}
+                        className="bg-[#141418] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between gap-4"
                       >
-                        Canjear
-                      </button>
-                    </div>
-                  );
-                })}
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-extrabold text-amber-400">
+                            {reward.cost} pts
+                          </span>
+                          <h4 className="text-sm font-bold text-white">{reward.title}</h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed">
+                            {reward.description}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleRedeemReward(reward)}
+                          className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition ${
+                            canAfford
+                              ? 'bg-white text-zinc-950 hover:bg-zinc-200'
+                              : 'bg-[#0A0A0C] text-zinc-500 border border-zinc-800'
+                          }`}
+                        >
+                          Canjear
+                        </button>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
 
           {/* =========================================================
-              PESTAÑA 4: PERFIL DE USUARIO Y MEMBRESÍA PATROCINANTE / ALIADO
+              PESTAÑA 4: PERFIL, VERIFICACIÓN DE CORREO Y REFERIDOS
           ========================================================= */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
@@ -1980,7 +2289,7 @@ export default function App() {
                     </div>
                     <h2 className="text-base font-black text-white">Tu Cuenta {brandConfig.name}</h2>
                     <p className="text-xs text-zinc-400">
-                      Accede como Consumidor Final o Comercializador/Taller para gestionar pedidos, puntos y garantías.
+                      Crea tu cuenta con verificación de correo y código de referido para sumar puntos.
                     </p>
                   </div>
 
@@ -2004,41 +2313,41 @@ export default function App() {
                       <LogIn className="w-4 h-4" /> Iniciar Sesión
                     </button>
                   </div>
-
-                  <div className="pt-3 border-t border-zinc-800 space-y-2">
-                    <span className="text-[11px] text-zinc-500 block text-center">
-                      Acceso rápido de prueba:
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => {
-                          setCurrentUserId('usr-1');
-                          showToast('Sesión: Carlos (Cliente)');
-                        }}
-                        className="p-2.5 rounded-xl bg-[#0A0A0C] hover:bg-zinc-900 border border-zinc-800 text-left"
-                      >
-                        <span className="text-[11px] font-bold text-white block">
-                          Carlos (Cliente)
-                        </span>
-                        <span className="text-[10px] text-zinc-500">Tarifa Consumidor</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCurrentUserId('usr-2');
-                          showToast('Sesión: TurboPro (Distribuidor)');
-                        }}
-                        className="p-2.5 rounded-xl bg-[#0A0A0C] hover:bg-zinc-900 border border-zinc-800 text-left"
-                      >
-                        <span className="text-[11px] font-bold text-emerald-400 block">
-                          TurboPro (Taller)
-                        </span>
-                        <span className="text-[10px] text-zinc-500">Desc. Comercializador</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
               ) : (
                 <>
+                  {/* Verificación de Correo Pendiente */}
+                  {!currentUser.emailVerified && (
+                    <form
+                      onSubmit={handleVerifyEmail}
+                      className="bg-amber-500/10 border border-amber-400/40 rounded-3xl p-4 space-y-2.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-amber-300 flex items-center gap-1.5">
+                          <Mail className="w-4 h-4" /> Verifica tu correo ({currentUser.email})
+                        </span>
+                        <span className="font-mono text-[11px] bg-black/40 px-2 py-0.5 rounded-lg text-amber-200">
+                          Código: {currentUser.verificationCode}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={verifyCodeInput}
+                          onChange={(e) => setVerifyCodeInput(e.target.value)}
+                          placeholder="Ingresa el código de 6 dígitos"
+                          className="flex-1 bg-[#0A0A0C] border border-zinc-700 rounded-xl px-3 py-2 text-white outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="px-4 py-2 rounded-xl bg-amber-400 text-zinc-950 font-extrabold"
+                        >
+                          Verificar
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
                   {/* Tarjeta Principal de Perfil */}
                   <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-4">
                     <div className="flex items-center justify-between gap-3">
@@ -2083,6 +2392,37 @@ export default function App() {
                           <ShieldCheck className="w-3.5 h-3.5" /> Consumidor Final • {userTier.name}
                         </span>
                       )}
+
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          currentUser.emailVerified
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-zinc-800 text-zinc-400'
+                        }`}
+                      >
+                        {currentUser.emailVerified ? 'Correo Verificado' : 'Correo sin verificar'}
+                      </span>
+                    </div>
+
+                    {/* Código de referido */}
+                    <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block">
+                          Tu código de recomendación (+{brandConfig.referralBonusPoints} pts)
+                        </span>
+                        <span className="font-mono font-bold text-amber-400">
+                          {currentUser.referralCode}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(currentUser.referralCode);
+                          showToast('Código copiado');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[11px] font-bold"
+                      >
+                        Copiar
+                      </button>
                     </div>
 
                     {/* Dirección editable */}
@@ -2160,41 +2500,9 @@ export default function App() {
                         ))
                     )}
                   </div>
-
-                  {/* Garantías registradas */}
-                  <div className="space-y-2.5">
-                    <h3 className="text-xs font-bold text-zinc-400">Mis Garantías</h3>
-                    {registeredWarranties.filter((w) => w.userId === currentUser.id).length === 0 ? (
-                      <p className="text-xs text-zinc-500 bg-[#141418] border border-zinc-800/70 rounded-2xl p-4">
-                        Escanea el QR de un envase Ápex en "Más" para activar tu garantía.
-                      </p>
-                    ) : (
-                      registeredWarranties
-                        .filter((w) => w.userId === currentUser.id)
-                        .map((war) => (
-                          <div
-                            key={war.id}
-                            className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between"
-                          >
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-white truncate">
-                                {war.productName}
-                              </p>
-                              <p className="text-[11px] text-zinc-500">
-                                {war.id} • {war.vehicleInfo}
-                              </p>
-                            </div>
-                            <span className="text-[11px] font-bold text-emerald-400 shrink-0">
-                              {war.expiryMonths} meses
-                            </span>
-                          </div>
-                        ))
-                    )}
-                  </div>
                 </>
               )}
 
-              {/* Botón Principal: Quiero ser Patrocinante / Aliado */}
               <div className="bg-[#141418] border border-orange-500/30 rounded-3xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
                   <Handshake className="w-4 h-4 text-orange-400" />
@@ -2203,7 +2511,7 @@ export default function App() {
                   </h3>
                 </div>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Postula tu marca, tienda de herramientas o evento automotriz como patrocinante oficial dentro de {brandConfig.name}.
+                  Postula tu marca, tienda de herramientas o lanzamiento dentro de {brandConfig.name}.
                 </p>
                 <button
                   onClick={() => openSponsorModal('Patrocinante (Paquetes Publicitarios)')}
@@ -2216,11 +2524,10 @@ export default function App() {
           )}
 
           {/* =========================================================
-              PESTAÑA 5: MÁS (HUB LIMPIO + EVENTOS + ALIADOS + QR + ADMIN)
+              PESTAÑA 5: MÁS (HUB + ASESORÍA WHATSAPP + EVENTOS + ALIADOS + QR + ADMIN)
           ========================================================= */}
           {activeTab === 'more' && (
             <div className="space-y-5">
-              {/* Barra superior de regreso si estamos en una subvista */}
               {moreView !== 'hub' && (
                 <button
                   onClick={() => setMoreView('hub')}
@@ -2230,30 +2537,47 @@ export default function App() {
                 </button>
               )}
 
-              {/* --- VISTA HUB PRINCIPAL DE "MÁS" --- */}
               {moreView === 'hub' && (
                 <div className="space-y-4">
                   <h2 className="text-lg font-black text-white">Ecosistema {brandConfig.name}</h2>
 
-                  {/* Botón destacado Quiero ser Patrocinante / Aliado */}
                   <button
                     onClick={() => openSponsorModal('Patrocinante (Paquetes Publicitarios)')}
                     className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-3xl p-5 text-left flex items-center justify-between shadow-lg shadow-orange-500/15 transition active:scale-[0.99]"
                   >
                     <div className="space-y-1">
                       <span className="text-[10px] font-black uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full">
-                        Alianzas & Publicidad
+                        Alianzas & Lanzamientos
                       </span>
                       <h3 className="text-base font-black">Quiero ser Patrocinante / Aliado</h3>
                       <p className="text-xs text-orange-50/90">
-                        Tiendas, herramientas y patrocinios de válidas
+                        Publicidad en toda la app, lanzamientos y válidas
                       </p>
                     </div>
                     <Handshake className="w-7 h-7 shrink-0" />
                   </button>
 
-                  {/* Tarjetas limpias de módulos */}
                   <div className="space-y-3">
+                    <button
+                      onClick={() => setMoreView('support')}
+                      className="w-full bg-[#141418] hover:bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between text-left transition"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                          <MessageCircle className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white">
+                            Asesoría Técnica (WhatsApp)
+                          </h4>
+                          <p className="text-[11px] text-emerald-400 font-semibold">
+                            Atención directa • {brandConfig.techSupportWhatsapp}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-zinc-500" />
+                    </button>
+
                     <button
                       onClick={() => setMoreView('events')}
                       className="w-full bg-[#141418] hover:bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between text-left transition"
@@ -2332,7 +2656,7 @@ export default function App() {
                             )}
                           </div>
                           <p className="text-[11px] text-zinc-400">
-                            Precios, fotos, anuncios internos, aliados y eventos
+                            Incluir, editar, pausar y eliminar en toda la app
                           </p>
                         </div>
                       </div>
@@ -2342,7 +2666,87 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- SUBVISTA 1: EVENTOS, TUNING SHOWS Y VÁLIDAS --- */}
+              {/* --- SUBVISTA ASESORÍA TÉCNICA POR WHATSAPP --- */}
+              {moreView === 'support' && (
+                <form
+                  onSubmit={handleSendWhatsAppSupport}
+                  className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-4 text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                      <MessageCircle className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-black text-white">Asesoría Técnica</h2>
+                      <p className="text-[11px] text-emerald-400 font-semibold">
+                        WhatsApp directo: {brandConfig.techSupportWhatsapp}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 flex items-start gap-2 text-[11px] text-amber-200">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <span>
+                      Si el motor presenta recalentamiento severo o pérdida de aceite, detén el vehículo en un lugar seguro antes de abrir el capó.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">
+                      Vehículo, modelo y año *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={supportForm.vehicle}
+                      onChange={(e) => setSupportForm({ ...supportForm, vehicle: e.target.value })}
+                      placeholder="Ej: Chevrolet Silverado 1998 5.7L"
+                      className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">Tipo de consulta</label>
+                    <select
+                      value={supportForm.issueType}
+                      onChange={(e) => setSupportForm({ ...supportForm, issueType: e.target.value })}
+                      className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
+                    >
+                      <option>Temperatura / Refrigerante</option>
+                      <option>Lubricación / Aceite / Ruidos</option>
+                      <option>Encendido / Batería / Sensores</option>
+                      <option>Frenos / Tren Delantero / Grasas</option>
+                      <option>Limpieza / Inyectores / Mantenimiento</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">
+                      Describe la falla o síntoma *
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={supportForm.description}
+                      onChange={(e) =>
+                        setSupportForm({ ...supportForm, description: e.target.value })
+                      }
+                      placeholder="Explica qué ocurre, cuándo pasa y qué has revisado..."
+                      className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-extrabold text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Enviar Reporte a WhatsApp ({brandConfig.techSupportWhatsapp})
+                  </button>
+                </form>
+              )}
+
+              {/* --- SUBVISTA EVENTOS, TUNING SHOWS Y VÁLIDAS --- */}
               {moreView === 'events' && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
@@ -2399,7 +2803,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- SUBVISTA 2: DIRECTORIO DE ALIADOS Y PATROCINADORES --- */}
+              {/* --- SUBVISTA DIRECTORIO DE ALIADOS Y PATROCINADORES --- */}
               {moreView === 'allies' && (
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
@@ -2447,7 +2851,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- SUBVISTA 3: QR AUTENTICIDAD, GARANTÍA Y DESCARGA APP --- */}
+              {/* --- SUBVISTA QR AUTENTICIDAD, GARANTÍA Y DESCARGA APP --- */}
               {moreView === 'qr' && (
                 <div className="space-y-5">
                   <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-4">
@@ -2461,7 +2865,6 @@ export default function App() {
                       <FileCheck2 className="w-5 h-5 text-emerald-400" />
                     </div>
 
-                    {/* Ingreso manual o selección de envase */}
                     <form onSubmit={handleManualQrVerify} className="flex gap-2">
                       <input
                         type="text"
@@ -2490,7 +2893,6 @@ export default function App() {
                       ))}
                     </select>
 
-                    {/* Tarjeta QR */}
                     <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-4 flex items-center gap-4">
                       <div className="w-16 h-16 rounded-xl bg-white p-1.5 shrink-0">
                         <svg
@@ -2525,7 +2927,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Botones de Descarga Oficial */}
                     <div className="grid grid-cols-2 gap-2.5">
                       <button
                         onClick={() => setStoreModal('playstore')}
@@ -2544,7 +2945,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Formulario de Garantía */}
                   <form
                     onSubmit={handleActivateWarranty}
                     className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-3.5"
@@ -2603,19 +3003,35 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- SUBVISTA 4: PANEL DE ADMINISTRACIÓN (PIN 1234) --- */}
+              {/* --- SUBVISTA PANEL DE ADMINISTRACIÓN (SIN BOTÓN NI PISTA DE PIN) --- */}
               {moreView === 'admin' && (
                 <>
                   {!isAdminUnlocked ? (
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        if (pinInput === brandConfig.adminPin) {
+                        const now = Date.now();
+                        if (now < lockUntil) {
+                          const seg = Math.ceil((lockUntil - now) / 1000);
+                          showToast(`Bloqueado temporalmente (${seg}s)`, 'error');
+                          return;
+                        }
+                        if (pinInput.trim() === brandConfig.adminPin) {
                           setIsAdminUnlocked(true);
                           setPinInput('');
+                          setFailedPinAttempts(0);
                           showToast('Panel Admin desbloqueado');
                         } else {
-                          showToast('PIN incorrecto', 'error');
+                          const nextFails = failedPinAttempts + 1;
+                          setFailedPinAttempts(nextFails);
+                          setPinInput('');
+                          if (nextFails >= 3) {
+                            setLockUntil(Date.now() + 30000);
+                            setFailedPinAttempts(0);
+                            showToast('3 intentos fallidos • Espera 30s', 'error');
+                          } else {
+                            showToast('Clave de administrador incorrecta', 'error');
+                          }
                         }
                       }}
                       className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 text-center space-y-4"
@@ -2626,51 +3042,41 @@ export default function App() {
                       <div>
                         <h3 className="text-sm font-black text-white">Panel Administrador</h3>
                         <p className="text-xs text-zinc-400 mt-1">
-                          Gestiona precios, fotos, publicidad interna, aliados y eventos.
+                          Ingresa tu clave maestra para incluir, editar o excluir elementos.
                         </p>
                       </div>
                       <input
                         type="password"
-                        maxLength={6}
                         value={pinInput}
                         onChange={(e) => setPinInput(e.target.value)}
-                        placeholder="••••"
-                        className="w-40 mx-auto block text-center tracking-widest text-base font-black bg-[#0A0A0C] border border-zinc-800 rounded-2xl py-2.5 text-white outline-none"
+                        placeholder="Clave de acceso"
+                        className="w-48 mx-auto block text-center tracking-widest text-sm font-bold bg-[#0A0A0C] border border-zinc-800 rounded-2xl py-2.5 px-3 text-white outline-none"
                       />
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPinInput(brandConfig.adminPin)}
-                          className="px-3.5 py-3 rounded-2xl bg-[#0A0A0C] border border-zinc-800 text-[11px] font-bold text-zinc-400"
-                        >
-                          PIN Demo ({brandConfig.adminPin})
-                        </button>
-                        <button
-                          type="submit"
-                          className="flex-1 py-3 rounded-2xl bg-orange-500 text-white font-extrabold text-xs"
-                        >
-                          Entrar
-                        </button>
-                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs transition"
+                      >
+                        Entrar
+                      </button>
                     </form>
                   ) : (
                     <div className="space-y-5">
-                      {/* Sub-pestañas de Admin */}
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                           {[
                             { id: 'products', label: 'Productos' },
-                            { id: 'ads', label: 'Anuncios' },
+                            { id: 'ads', label: 'Anuncios/Lanz.' },
                             {
                               id: 'allies',
                               label: `Aliados${pendingAlliesCount > 0 ? ` (${pendingAlliesCount})` : ''}`
                             },
                             { id: 'events', label: 'Eventos' },
+                            { id: 'rewards', label: 'Premios' },
                             {
                               id: 'users',
                               label: `Usuarios${pendingDealersCount > 0 ? ` (${pendingDealersCount})` : ''}`
                             },
-                            { id: 'brand', label: 'Marca' }
+                            { id: 'brand', label: 'WhatsApp/Marca' }
                           ].map((t) => (
                             <button
                               key={t.id}
@@ -2694,21 +3100,21 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* ADMIN 1: PRODUCTOS (CREAR Y EDITAR) */}
+                      {/* ADMIN 1: PRODUCTOS (INCLUIR, EDITAR, ELIMINAR) */}
                       {adminTab === 'products' && (
                         <div className="space-y-4">
                           <button
                             onClick={openNewProductModal}
                             className="w-full py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5"
                           >
-                            <Plus className="w-4 h-4" /> Nuevo Producto Ápex
+                            <Plus className="w-4 h-4" /> Incluir Producto Ápex
                           </button>
 
                           <div className="space-y-3">
                             {products.map((prod) => (
                               <div
                                 key={prod.id}
-                                className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-3"
+                                className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-2"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-950 shrink-0">
@@ -2723,19 +3129,31 @@ export default function App() {
                                     </p>
                                   </div>
                                 </div>
-                                <button
-                                  onClick={() => openEditProductModal(prod)}
-                                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0C] border border-zinc-700 text-xs font-bold text-white flex items-center gap-1 shrink-0"
-                                >
-                                  <Edit3 className="w-3 h-3 text-orange-400" /> Editar
-                                </button>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <button
+                                    onClick={() => openEditProductModal(prod)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-[#0A0A0C] border border-zinc-700 text-xs font-bold text-white flex items-center gap-1"
+                                  >
+                                    <Edit3 className="w-3 h-3 text-orange-400" /> Editar
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setProducts((prev) => prev.filter((p) => p.id !== prod.id));
+                                      showToast('Producto excluido del catálogo');
+                                    }}
+                                    className="p-2 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-red-400"
+                                    title="Eliminar producto"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* ADMIN 2: ANUNCIOS INTERNOS PROPIOS */}
+                      {/* ADMIN 2: ANUNCIOS Y LANZAMIENTOS (INCLUIR, PAUSAR, ELIMINAR) */}
                       {adminTab === 'ads' && (
                         <div className="space-y-5">
                           <form
@@ -2743,7 +3161,7 @@ export default function App() {
                             className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3 text-xs"
                           >
                             <h4 className="font-extrabold text-white flex items-center gap-1.5">
-                              <Megaphone className="w-4 h-4 text-orange-400" /> Nuevo Paquete Publicitario
+                              <Megaphone className="w-4 h-4 text-orange-400" /> Incluir Publicidad o Lanzamiento
                             </h4>
                             <input
                               type="text"
@@ -2752,7 +3170,7 @@ export default function App() {
                               onChange={(e) =>
                                 setNewAdForm({ ...newAdForm, advertiser: e.target.value })
                               }
-                              placeholder="Marca o tienda anunciante *"
+                              placeholder="Marca o anunciante *"
                               className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                             />
                             <input
@@ -2762,7 +3180,7 @@ export default function App() {
                               onChange={(e) =>
                                 setNewAdForm({ ...newAdForm, title: e.target.value })
                               }
-                              placeholder="Título del anuncio *"
+                              placeholder="Título del anuncio o lanzamiento *"
                               className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                             />
                             <input
@@ -2774,10 +3192,36 @@ export default function App() {
                               placeholder="Descripción corta"
                               className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                             />
+
+                            <label className="flex items-center gap-2 bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={newAdForm.isLaunch}
+                                onChange={(e) =>
+                                  setNewAdForm({ ...newAdForm, isLaunch: e.target.checked })
+                                }
+                              />
+                              <span className="text-amber-300 font-bold flex items-center gap-1">
+                                <Rocket className="w-3.5 h-3.5" /> Marcar como Lanzamiento de Anunciante
+                              </span>
+                            </label>
+
+                            {newAdForm.isLaunch && (
+                              <input
+                                type="text"
+                                value={newAdForm.launchNote}
+                                onChange={(e) =>
+                                  setNewAdForm({ ...newAdForm, launchNote: e.target.value })
+                                }
+                                placeholder="Aviso de lanzamiento (Ej: Preventa este viernes)"
+                                className="w-full bg-[#0A0A0C] border border-amber-500/40 rounded-xl px-3 py-2 text-white outline-none"
+                              />
+                            )}
+
                             <div className="flex gap-2">
                               <label className="flex-1 py-2 px-3 rounded-xl bg-[#0A0A0C] border border-dashed border-zinc-700 text-zinc-300 flex items-center justify-center gap-1.5 cursor-pointer">
                                 <Upload className="w-3.5 h-3.5 text-orange-400" />
-                                Subir banner
+                                Subir arte diseñado
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -2804,7 +3248,7 @@ export default function App() {
                               type="submit"
                               className="w-full py-2.5 rounded-xl bg-orange-500 text-white font-extrabold"
                             >
-                              Publicar Anuncio Interno
+                              Publicar en Toda la App
                             </button>
                           </form>
 
@@ -2815,9 +3259,16 @@ export default function App() {
                                 className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-2"
                               >
                                 <div className="min-w-0">
-                                  <span className="text-[10px] font-bold text-orange-400">
-                                    {ad.advertiser}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold text-orange-400 truncate">
+                                      {ad.advertiser}
+                                    </span>
+                                    {ad.isLaunch && (
+                                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">
+                                        LANZAMIENTO
+                                      </span>
+                                    )}
+                                  </div>
                                   <h5 className="text-xs font-bold text-white truncate">
                                     {ad.title}
                                   </h5>
@@ -2845,9 +3296,10 @@ export default function App() {
                                     )}
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      setAds((prev) => prev.filter((a) => a.id !== ad.id))
-                                    }
+                                    onClick={() => {
+                                      setAds((prev) => prev.filter((a) => a.id !== ad.id));
+                                      showToast('Anuncio excluido');
+                                    }}
                                     className="p-2 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-red-400"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -2859,72 +3311,127 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* ADMIN 3: SOLICITUDES DE ALIADOS Y PATROCINADORES */}
+                      {/* ADMIN 3: ALIADOS (INCLUIR DIRECTO, APROBAR, EXCLUIR) */}
                       {adminTab === 'allies' && (
-                        <div className="space-y-3">
-                          {allies.map((ally) => (
-                            <div
-                              key={ally.id}
-                              className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 space-y-2.5"
+                        <div className="space-y-4">
+                          <form
+                            onSubmit={handleAddAllyDirect}
+                            className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-2.5 text-xs"
+                          >
+                            <h4 className="font-extrabold text-white">Incluir Aliado Directo</h4>
+                            <input
+                              type="text"
+                              required
+                              value={newAllyForm.brandName}
+                              onChange={(e) =>
+                                setNewAllyForm({ ...newAllyForm, brandName: e.target.value })
+                              }
+                              placeholder="Nombre de tienda o aliado *"
+                              className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="text"
+                                value={newAllyForm.category}
+                                onChange={(e) =>
+                                  setNewAllyForm({ ...newAllyForm, category: e.target.value })
+                                }
+                                placeholder="Rubro (Ej: Herramientas)"
+                                className="bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                              />
+                              <input
+                                type="text"
+                                required
+                                value={newAllyForm.phone}
+                                onChange={(e) =>
+                                  setNewAllyForm({ ...newAllyForm, phone: e.target.value })
+                                }
+                                placeholder="Teléfono *"
+                                className="bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              value={newAllyForm.notes}
+                              onChange={(e) =>
+                                setNewAllyForm({ ...newAllyForm, notes: e.target.value })
+                              }
+                              placeholder="Descripción o beneficio para miembros"
+                              className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                            />
+                            <button
+                              type="submit"
+                              className="w-full py-2.5 rounded-xl bg-orange-500 text-white font-extrabold"
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <h4 className="text-xs font-bold text-white">{ally.brandName}</h4>
-                                  <p className="text-[11px] text-orange-400">{ally.packagePlan}</p>
-                                  <p className="text-[11px] text-zinc-400 mt-0.5">
-                                    {ally.contactName} • {ally.phone}
-                                  </p>
-                                </div>
-                                <span
-                                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                                    ally.status === 'approved'
-                                      ? 'bg-emerald-500/20 text-emerald-400'
-                                      : 'bg-amber-500/20 text-amber-400'
-                                  }`}
-                                >
-                                  {ally.status === 'approved' ? 'Activo' : 'Pendiente'}
-                                </span>
-                              </div>
+                              + Incluir Aliado
+                            </button>
+                          </form>
 
-                              <div className="flex gap-2">
-                                {ally.status !== 'approved' && (
+                          <div className="space-y-3">
+                            {allies.map((ally) => (
+                              <div
+                                key={ally.id}
+                                className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 space-y-2.5"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <h4 className="text-xs font-bold text-white">{ally.brandName}</h4>
+                                    <p className="text-[11px] text-orange-400">{ally.packagePlan}</p>
+                                    <p className="text-[11px] text-zinc-400 mt-0.5">
+                                      {ally.contactName} • {ally.phone}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                      ally.status === 'approved'
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'bg-amber-500/20 text-amber-400'
+                                    }`}
+                                  >
+                                    {ally.status === 'approved' ? 'Activo' : 'Pendiente'}
+                                  </span>
+                                </div>
+
+                                <div className="flex gap-2">
+                                  {ally.status !== 'approved' && (
+                                    <button
+                                      onClick={() => {
+                                        setAllies((prev) =>
+                                          prev.map((a) =>
+                                            a.id === ally.id ? { ...a, status: 'approved' } : a
+                                          )
+                                        );
+                                        showToast('Aliado aprobado y publicado');
+                                      }}
+                                      className="flex-1 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 text-[11px] font-extrabold"
+                                    >
+                                      Aprobar Aliado
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => {
-                                      setAllies((prev) =>
-                                        prev.map((a) =>
-                                          a.id === ally.id ? { ...a, status: 'approved' } : a
-                                        )
-                                      );
-                                      showToast('Aliado aprobado y publicado');
+                                      setAllies((prev) => prev.filter((a) => a.id !== ally.id));
+                                      showToast('Aliado excluido');
                                     }}
-                                    className="flex-1 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 text-[11px] font-extrabold"
+                                    className="px-3 py-1.5 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-[11px] text-red-400 font-bold"
                                   >
-                                    Aprobar Aliado
+                                    Excluir
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    setAllies((prev) => prev.filter((a) => a.id !== ally.id));
-                                    showToast('Solicitud eliminada');
-                                  }}
-                                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-[11px] text-red-400 font-bold"
-                                >
-                                  Eliminar
-                                </button>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       )}
 
-                      {/* ADMIN 4: EVENTOS Y VÁLIDAS */}
+                      {/* ADMIN 4: EVENTOS Y VÁLIDAS (INCLUIR Y ELIMINAR) */}
                       {adminTab === 'events' && (
                         <div className="space-y-4">
                           <form
                             onSubmit={handleCreateEvent}
                             className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3 text-xs"
                           >
-                            <h4 className="font-extrabold text-white">Publicar Evento / Válida</h4>
+                            <h4 className="font-extrabold text-white">Incluir Evento / Válida</h4>
                             <input
                               type="text"
                               required
@@ -2969,7 +3476,7 @@ export default function App() {
                               type="submit"
                               className="w-full py-2.5 rounded-xl bg-orange-500 text-white font-extrabold"
                             >
-                              Agregar a Cartelera
+                              + Agregar a Cartelera
                             </button>
                           </form>
 
@@ -2986,9 +3493,10 @@ export default function App() {
                                   <p className="text-[11px] text-zinc-400">{ev.date}</p>
                                 </div>
                                 <button
-                                  onClick={() =>
-                                    setEvents((prev) => prev.filter((item) => item.id !== ev.id))
-                                  }
+                                  onClick={() => {
+                                    setEvents((prev) => prev.filter((item) => item.id !== ev.id));
+                                    showToast('Evento excluido');
+                                  }}
                                   className="p-2 rounded-xl bg-[#0A0A0C] text-red-400"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -2999,7 +3507,98 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* ADMIN 5: USUARIOS Y ROLES */}
+                      {/* ADMIN 5: PREMIOS Y RECOMPENSAS (INCLUIR Y ELIMINAR) */}
+                      {adminTab === 'rewards' && (
+                        <div className="space-y-4">
+                          <form
+                            onSubmit={handleAddReward}
+                            className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-2.5 text-xs"
+                          >
+                            <h4 className="font-extrabold text-white flex items-center gap-1.5">
+                              <Gift className="w-4 h-4 text-amber-400" /> Incluir Recompensa
+                            </h4>
+                            <input
+                              type="text"
+                              required
+                              value={newRewardForm.title}
+                              onChange={(e) =>
+                                setNewRewardForm({ ...newRewardForm, title: e.target.value })
+                              }
+                              placeholder="Nombre del premio o cupón *"
+                              className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                            />
+                            <input
+                              type="text"
+                              value={newRewardForm.description}
+                              onChange={(e) =>
+                                setNewRewardForm({ ...newRewardForm, description: e.target.value })
+                              }
+                              placeholder="Condición o detalle"
+                              className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="number"
+                                required
+                                value={newRewardForm.cost}
+                                onChange={(e) =>
+                                  setNewRewardForm({ ...newRewardForm, cost: e.target.value })
+                                }
+                                placeholder="Costo en pts *"
+                                className="bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                              />
+                              <select
+                                value={newRewardForm.type}
+                                onChange={(e) =>
+                                  setNewRewardForm({ ...newRewardForm, type: e.target.value })
+                                }
+                                className="bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                              >
+                                <option value="discount">Cupón % OFF</option>
+                                <option value="discount_fixed">Bono $ Fijo</option>
+                                <option value="gift">Regalo / Insumo</option>
+                              </select>
+                            </div>
+                            <button
+                              type="submit"
+                              className="w-full py-2.5 rounded-xl bg-amber-400 text-zinc-950 font-extrabold"
+                            >
+                              + Guardar Recompensa
+                            </button>
+                          </form>
+
+                          <div className="space-y-2.5">
+                            {rewardsCatalog.map((rew) => (
+                              <div
+                                key={rew.id}
+                                className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-2"
+                              >
+                                <div className="min-w-0">
+                                  <span className="text-[10px] font-bold text-amber-400">
+                                    {rew.cost} pts
+                                  </span>
+                                  <h5 className="text-xs font-bold text-white truncate">
+                                    {rew.title}
+                                  </h5>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setRewardsCatalog((prev) =>
+                                      prev.filter((r) => r.id !== rew.id)
+                                    );
+                                    showToast('Recompensa excluida');
+                                  }}
+                                  className="p-2 rounded-xl bg-[#0A0A0C] text-red-400"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ADMIN 6: USUARIOS Y ROLES */}
                       {adminTab === 'users' && (
                         <div className="space-y-3">
                           {users.map((u) => {
@@ -3060,10 +3659,27 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* ADMIN 6: MARCA, LOGO, PEDIDOS Y GARANTÍAS */}
+                      {/* ADMIN 7: WHATSAPP TÉCNICO, MARCA Y SEGURIDAD */}
                       {adminTab === 'brand' && (
                         <div className="space-y-4">
                           <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-5 space-y-3.5 text-xs">
+                            <div>
+                              <label className="text-[11px] text-emerald-400 font-bold block mb-1">
+                                WhatsApp de Asesoría Técnica
+                              </label>
+                              <input
+                                type="text"
+                                value={brandConfig.techSupportWhatsapp}
+                                onChange={(e) =>
+                                  setBrandConfig({
+                                    ...brandConfig,
+                                    techSupportWhatsapp: e.target.value
+                                  })
+                                }
+                                className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono outline-none"
+                              />
+                            </div>
+
                             <div>
                               <label className="text-[11px] text-zinc-400 block mb-1">
                                 Nombre de la App / Empresa
@@ -3098,24 +3714,23 @@ export default function App() {
                               </label>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2.5">
+                            <div className="grid grid-cols-3 gap-2">
                               <div>
-                                <label className="text-[11px] text-zinc-400 block mb-1">
-                                  PIN Admin
+                                <label className="text-[10px] text-zinc-400 block mb-1">
+                                  Clave Admin
                                 </label>
                                 <input
                                   type="text"
-                                  maxLength={6}
                                   value={brandConfig.adminPin}
                                   onChange={(e) =>
                                     setBrandConfig({ ...brandConfig, adminPin: e.target.value })
                                   }
-                                  className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                                  className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-2.5 py-2 text-white outline-none"
                                 />
                               </div>
                               <div>
-                                <label className="text-[11px] text-zinc-400 block mb-1">
-                                  Puntos por $1
+                                <label className="text-[10px] text-zinc-400 block mb-1">
+                                  Pts por $1
                                 </label>
                                 <input
                                   type="number"
@@ -3126,29 +3741,26 @@ export default function App() {
                                       pointsPerDollar: parseInt(e.target.value || '5', 10)
                                     })
                                   }
-                                  className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
+                                  className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-2.5 py-2 text-white outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-zinc-400 block mb-1">
+                                  Bono Referido
+                                </label>
+                                <input
+                                  type="number"
+                                  value={brandConfig.referralBonusPoints}
+                                  onChange={(e) =>
+                                    setBrandConfig({
+                                      ...brandConfig,
+                                      referralBonusPoints: parseInt(e.target.value || '150', 10)
+                                    })
+                                  }
+                                  className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-2.5 py-2 text-white outline-none"
                                 />
                               </div>
                             </div>
-                          </div>
-
-                          <div className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 space-y-2">
-                            <h4 className="text-xs font-bold text-zinc-400">
-                              Últimos Pedidos ({ordersHistory.length}) • Garantías ({registeredWarranties.length})
-                            </h4>
-                            {ordersHistory.slice(0, 3).map((o) => (
-                              <div
-                                key={o.id}
-                                className="flex justify-between text-xs py-1.5 border-b border-zinc-800/70 last:border-0"
-                              >
-                                <span className="text-zinc-300">
-                                  {o.id} • {o.customerName}
-                                </span>
-                                <span className="font-bold text-emerald-400">
-                                  ${o.total.toFixed(2)}
-                                </span>
-                              </div>
-                            ))}
                           </div>
                         </div>
                       )}
@@ -3340,7 +3952,7 @@ export default function App() {
                   rows={2}
                   value={sponsorForm.notes}
                   onChange={(e) => setSponsorForm({ ...sponsorForm, notes: e.target.value })}
-                  placeholder="Cuéntanos qué productos o promoción deseas destacar..."
+                  placeholder="Cuéntanos qué productos, promoción o lanzamiento deseas destacar..."
                   className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2 text-white outline-none"
                 />
 
@@ -3422,7 +4034,7 @@ export default function App() {
                         }`}
                       >
                         <Building2 className="w-4 h-4 text-emerald-400 mb-1" />
-                        <div className="font-bold">Comercializador</div>
+                        <div className="font-bold">Comerciante / Tienda</div>
                         <div className="text-[10px] text-zinc-500">-22% a -28% taller</div>
                       </button>
                     </div>
@@ -3434,7 +4046,7 @@ export default function App() {
                       onChange={(e) =>
                         setRegisterForm({ ...registerForm, name: e.target.value })
                       }
-                      placeholder="Nombre completo o taller *"
+                      placeholder="Nombre completo, tienda o taller *"
                       className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
                     />
                     <input
@@ -3444,7 +4056,7 @@ export default function App() {
                       onChange={(e) =>
                         setRegisterForm({ ...registerForm, email: e.target.value })
                       }
-                      placeholder="Correo electrónico *"
+                      placeholder="Correo electrónico para verificación *"
                       className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
                     />
                     <div className="grid grid-cols-2 gap-2">
@@ -3476,6 +4088,16 @@ export default function App() {
                       }
                       placeholder="Dirección de entrega"
                       className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white outline-none"
+                    />
+
+                    <input
+                      type="text"
+                      value={registerForm.referredBy}
+                      onChange={(e) =>
+                        setRegisterForm({ ...registerForm, referredBy: e.target.value })
+                      }
+                      placeholder="Código de quien te recomendó (Ej: CARLOS-APEX)"
+                      className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-amber-300 outline-none"
                     />
 
                     {registerForm.accountType === 'dealer' && (
@@ -3554,13 +4176,20 @@ export default function App() {
 
                 <div className="overflow-y-auto p-5 space-y-5">
                   <div className="rounded-2xl overflow-hidden h-44 bg-zinc-950">
-                    {renderPhoto(detailProduct.id, detailProduct.image, detailProduct.name, 'w-full h-44')}
+                    {renderPhoto(
+                      detailProduct.id,
+                      detailProduct.image,
+                      detailProduct.name,
+                      'w-full h-44'
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-[11px]">
                       <span className="font-bold text-orange-400">{detailProduct.category}</span>
-                      <span className="text-amber-400 font-bold">• +{pricing.effectivePoints} pts</span>
+                      <span className="text-amber-400 font-bold">
+                        • +{pricing.effectivePoints} pts
+                      </span>
                       <span className="text-emerald-400">• {detailProduct.stock} disp.</span>
                     </div>
                     <h3 className="text-lg font-black text-white leading-snug">
