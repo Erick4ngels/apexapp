@@ -7,17 +7,20 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>APEX - Ecosistema Automotriz</title>
-    <link rel="icon" type="image/jpeg" href="/2026-11-22%2018.51.16.jpg" />
-    <link rel="apple-touch-icon" href="/2026-11-22%2018.51.16.jpg" />
+    <link rel="icon" type="image/jpeg" href="/IMG_20261123_004819_766.jpg" />
+    <link rel="apple-touch-icon" href="/IMG_20261123_004819_766.jpg" />
     <link rel="manifest" href="/manifest.json" />
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-zinc-950 text-zinc-100">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-<script>
+    <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js');
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
       }
-    </script></body>
+    </script>
+  </body>
 </html>
