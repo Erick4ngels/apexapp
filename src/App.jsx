@@ -6,19 +6,31 @@ import {
   Search,
   MessageCircle,
   Sparkles,
-  CheckCircle2,
   X,
   Plus,
   Minus,
   Trash2,
   Award,
-  Layers,
   LogOut,
-  Building2,
-  Users,
   ChevronLeft,
   ChevronRight,
-  SlidersHorizontal
+  Car,
+  HeartPulse,
+  Stethoscope,
+  Building2,
+  Home,
+  Cpu,
+  Shirt,
+  PawPrint,
+  Wine,
+  Ticket,
+  Hotel,
+  Utensils,
+  Compass,
+  Navigation,
+  Recycle,
+  LayoutGrid,
+  Users
 } from 'lucide-react';
 import {
   VERTICALS,
@@ -42,7 +54,7 @@ const STORAGE_KEYS = {
 
 const DEFAULT_SETTINGS = {
   brandName: 'ÁPEX',
-  tagline: 'Ecosistema Comercial y Red Social Curada • Sello de Calidad',
+  tagline: 'Ecosistema Curado • Sello de Calidad',
   whatsappPhone: '584141470773',
   exchangeRateBs: 52.0,
   pointsPerDollar: 5,
@@ -53,19 +65,39 @@ const DEFAULT_ADS = [
   {
     id: 'ad-megafreeze-launch',
     advertiser: 'Megafreeze Venezuela',
-    tag: 'Aliado Oficial • Calidad Certificada',
-    title: 'Refrigerantes Orgánicos y Lubricantes Sintéticos',
-    description:
-      'Protección térmica y de motor auditada por ÁPEX. Gana puntos cruzados en cada compra.',
+    tag: 'Aliado Oficial',
+    title: 'Refrigerantes Orgánicos y Lubricantes',
+    description: 'Calidad certificada y puntos cruzados en cada compra.',
     image:
       'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=1000&q=80',
     ctaText: 'Ver Aliado',
     targetSection: 'allies',
     isLaunch: true,
-    launchNote: 'Lanzamiento Oficial: Línea Megafreeze disponible en stock ÁPEX',
+    launchNote: 'Lanzamiento ÁPEX: Megafreeze disponible en stock',
     active: true
   }
 ];
+
+function getVerticalIcon(verticalId) {
+  const map = {
+    automotriz: Car,
+    belleza: HeartPulse,
+    medico: Stethoscope,
+    'bienes-raices': Building2,
+    hogar: Home,
+    electronica: Cpu,
+    'ropa-zapatos': Shirt,
+    mascotas: PawPrint,
+    licores: Wine,
+    entretenimiento: Ticket,
+    'hoteles-hospedaje': Hotel,
+    'restaurantes-comida-rapida': Utensils,
+    turismo: Compass,
+    'viajes-taxi': Navigation,
+    'reciclaje-ecologia': Recycle
+  };
+  return map[verticalId] || LayoutGrid;
+}
 
 function safeLoad(key, fallback) {
   try {
@@ -77,7 +109,6 @@ function safeLoad(key, fallback) {
 }
 
 export default function App() {
-  // --- ESTADOS PRINCIPALES DEL ECOSISTEMA ---
   const [settings, setSettings] = useState(() =>
     safeLoad(STORAGE_KEYS.settings, DEFAULT_SETTINGS)
   );
@@ -114,13 +145,15 @@ export default function App() {
     safeLoad(STORAGE_KEYS.orders, [])
   );
 
-  // --- NAVEGACIÓN Y FILTROS ---
+  // --- NAVEGACIÓN Y MENÚ DE CATEGORÍAS A PANTALLA COMPLETA ---
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'social' | 'cart' | 'profile' | 'admin'
-  const [selectedVertical, setSelectedVertical] = useState('all'); // 'all' o id de VERTICALS
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [expandedVerticalId, setExpandedVerticalId] = useState(null);
+  const [selectedVertical, setSelectedVertical] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [selectedAllyFilter, setSelectedAllyFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceRole, setPriceRole] = useState('consumer'); // 'consumer' | 'dealer'
+  const [priceRole, setPriceRole] = useState('consumer');
 
   // --- MODALES Y CARRITO ---
   const [detailItem, setDetailItem] = useState(null);
@@ -131,8 +164,8 @@ export default function App() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
 
-  // --- AUTENTICACIÓN Y ADMIN ---
-  const [authModalMode, setAuthModalMode] = useState(null); // 'login' | 'register' | null
+  // --- AUTH & ADMIN ---
+  const [authModalMode, setAuthModalMode] = useState(null);
   const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
@@ -141,7 +174,7 @@ export default function App() {
   });
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminPinInput, setAdminPinInput] = useState('');
-  const [adminSubView, setAdminSubView] = useState('ecosystem'); // 'ecosystem' | 'settings'
+  const [adminSubView, setAdminSubView] = useState('ecosystem');
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -155,7 +188,7 @@ export default function App() {
       localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(currentUserId));
       localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(ordersHistory));
     } catch {
-      // Ignora errores de cuota en almacenamiento local
+      // Ignora errores de cuota
     }
   }, [settings, allies, items, ads, posts, users, currentUserId, ordersHistory]);
 
@@ -163,7 +196,7 @@ export default function App() {
     setToast({ message, type });
     setTimeout(() => {
       setToast((prev) => (prev?.message === message ? null : prev));
-    }, 3200);
+    }, 3000);
   };
 
   const currentUser = useMemo(
@@ -182,7 +215,6 @@ export default function App() {
     [activeAds]
   );
 
-  // --- CÁLCULO DE PRECIOS Y PUNTOS ---
   const getUnitPrice = (item) => {
     const base = Number(item.price || 0);
     if (priceRole === 'dealer') {
@@ -229,10 +261,9 @@ export default function App() {
     return approvedOnly.filter((a) => a.verticalId === selectedVertical);
   }, [allies, selectedVertical]);
 
-  // --- CARRITO ---
   const addToCart = (item, qty = 1) => {
     if (Number(item.stock || 0) <= 0) {
-      showToast('Producto sin stock disponible por ahora', 'error');
+      showToast('Sin stock disponible', 'error');
       return;
     }
     setCart((prev) => {
@@ -286,17 +317,12 @@ export default function App() {
 
   const handleConfirmOrder = (e) => {
     e.preventDefault();
-    if (cart.length === 0) {
-      showToast('Tu carrito está vacío', 'error');
-      return;
-    }
+    if (cart.length === 0) return;
 
     const firstAllyId = cart[0]?.item?.allyId;
     const allyObj = allies.find((a) => a.id === firstAllyId);
     const orderId = `APX-${Math.floor(100000 + Math.random() * 899999)}`;
-    const summaryText = cart
-      .map((c) => `${c.qty}x ${c.item.name}`)
-      .join(', ');
+    const summaryText = cart.map((c) => `${c.qty}x ${c.item.name}`).join(', ');
 
     const newOrder = {
       id: orderId,
@@ -318,7 +344,6 @@ export default function App() {
 
     setOrdersHistory((prev) => [newOrder, ...prev]);
 
-    // Descontar stock
     setItems((prev) =>
       prev.map((it) => {
         const bought = cart.find((c) => c.item.id === it.id);
@@ -327,7 +352,6 @@ export default function App() {
       })
     );
 
-    // Sumar puntos al comprador
     if (currentUser) {
       setUsers((prev) =>
         prev.map((u) =>
@@ -338,7 +362,6 @@ export default function App() {
       );
     }
 
-    // Sumar puntos al aliado vendedor
     if (allyObj) {
       setAllies((prev) =>
         prev.map((a) =>
@@ -353,14 +376,12 @@ export default function App() {
       );
     }
 
-    // Enviar mensaje estructurado por WhatsApp
     const waText = encodeURIComponent(
-      `Hola equipo ${settings.brandName}, confirmo pedido *${orderId}*:\n` +
+      `Hola ${settings.brandName}, confirmo pedido *${orderId}*:\n` +
         `• Aliado: ${newOrder.allyName}\n` +
         `• Detalle: ${summaryText}\n` +
         `• Total: $${cartTotals.subtotal.toFixed(2)} (Bs. ${cartTotals.totalBs.toFixed(2)})\n` +
-        `• Pago: ${paymentMethod} | Ref: ${newOrder.paymentRef}\n` +
-        `• Cliente: ${newOrder.customerName} (${newOrder.customerPhone})`
+        `• Pago: ${paymentMethod} | Ref: ${newOrder.paymentRef}`
     );
     window.open(
       `https://wa.me/${settings.whatsappPhone}?text=${waText}`,
@@ -371,13 +392,10 @@ export default function App() {
     setCart([]);
     setPaymentRef('');
     setCustomerNotes('');
-    showToast(
-      `Pedido ${orderId} registrado: +${cartTotals.buyerPoints} pts comprador y +${cartTotals.sellerPoints} pts aliado`
-    );
+    showToast(`Pedido ${orderId} confirmado (+${cartTotals.buyerPoints} pts)`);
     setActiveTab('social');
   };
 
-  // --- AUTENTICACIÓN ---
   const handleAuthSubmit = (e) => {
     e.preventDefault();
     const cleanEmail = authForm.email.trim().toLowerCase();
@@ -386,12 +404,12 @@ export default function App() {
     if (authModalMode === 'login') {
       const found = users.find((u) => u.email.toLowerCase() === cleanEmail);
       if (!found) {
-        showToast('No existe una cuenta con ese correo. Regístrate primero.', 'error');
+        showToast('Correo no registrado', 'error');
         return;
       }
       setCurrentUserId(found.id);
       setAuthModalMode(null);
-      showToast(`Bienvenido de nuevo, ${found.name}`);
+      showToast(`Hola, ${found.name}`);
       return;
     }
 
@@ -401,24 +419,13 @@ export default function App() {
       .replace(/[^a-z0-9]/g, '')
       .slice(0, 12)}_apex`;
 
-    let bonus = 50;
-    const refCode = authForm.referralInput.trim().toUpperCase();
-    if (refCode) {
-      bonus += 25;
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.referralCode === refCode ? { ...u, points: Number(u.points || 0) + 25 } : u
-        )
-      );
-    }
-
     const newUser = {
       id: `usr-${Date.now()}`,
       name: cleanName,
       handle: cleanHandle,
       email: cleanEmail,
-      role: authForm.role || 'consumer',
-      points: bonus,
+      role: 'consumer',
+      points: 50,
       referralCode: `${cleanName.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6) || 'APEX'}-${Math.floor(
         100 + Math.random() * 899
       )}`,
@@ -431,10 +438,9 @@ export default function App() {
     setCurrentUserId(newUser.id);
     setAuthModalMode(null);
     setAuthForm({ name: '', email: '', role: 'consumer', referralInput: '' });
-    showToast(`Cuenta creada en ÁPEX (+${bonus} pts iniciales)`);
+    showToast('Cuenta creada (+50 pts)');
   };
 
-  // --- ACCIONES SOCIALES ---
   const handleToggleFollow = ({ type, id, label }) => {
     if (!currentUser) return;
     setUsers((prev) =>
@@ -442,41 +448,30 @@ export default function App() {
         if (u.id !== currentUser.id) return u;
         const list = u.following || [];
         const exists = list.includes(id);
-        const nextFollowing = exists ? list.filter((x) => x !== id) : [...list, id];
-        showToast(exists ? `Dejaste de seguir a ${label}` : `Ahora sigues a ${label}`);
-        return { ...u, following: nextFollowing };
+        showToast(exists ? `Dejaste de seguir a ${label}` : `Siguiendo a ${label}`);
+        return {
+          ...u,
+          following: exists ? list.filter((x) => x !== id) : [...list, id]
+        };
       })
     );
-    if (type === 'ally') {
-      setAllies((prev) =>
-        prev.map((a) => {
-          if (a.id !== id) return a;
-          const followers = a.followers || [];
-          const has = followers.includes(currentUser.id);
-          return {
-            ...a,
-            followers: has
-              ? followers.filter((x) => x !== currentUser.id)
-              : [...followers, currentUser.id]
-          };
-        })
-      );
-    }
   };
 
   const handleCreateVerifiedPost = (payload) => {
     if (!currentUser) return;
-    const newPost = {
-      id: `post-${Date.now()}`,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userHandle: currentUser.handle || '@miembro_apex',
-      likes: [],
-      baseLikes: 0,
-      createdAt: 'Justo ahora',
-      ...payload
-    };
-    setPosts((prev) => [newPost, ...prev]);
+    setPosts((prev) => [
+      {
+        id: `post-${Date.now()}`,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userHandle: currentUser.handle || '@miembro_apex',
+        likes: [],
+        baseLikes: 0,
+        createdAt: 'Justo ahora',
+        ...payload
+      },
+      ...prev
+    ]);
   };
 
   const handleToggleLikePost = (postId) => {
@@ -502,10 +497,9 @@ export default function App() {
     setUsers((prev) =>
       prev.map((u) => (u.id === currentUser.id ? { ...u, currentMileage: km } : u))
     );
-    showToast(`Kilometraje actualizado a ${Number(km).toLocaleString()} km`);
+    showToast(`Kilometraje: ${Number(km).toLocaleString()} km`);
   };
 
-  // --- ACCIONES DEL PANEL ADMIN ---
   const handleSaveAlly = (allyData) => {
     setAllies((prev) => {
       const exists = prev.some((a) => a.id === allyData.id);
@@ -554,11 +548,10 @@ export default function App() {
   }, [detailItem]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] text-zinc-100 pb-24 selection:bg-orange-500/30">
-      {/* Notificación flotante */}
+    <div className="min-h-screen bg-[#0A0A0C] text-zinc-100 pb-28">
       {toast && (
         <div
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl text-xs font-extrabold shadow-xl border ${
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl text-xs font-extrabold shadow-xl border ${
             toast.type === 'error'
               ? 'bg-red-950/95 border-red-500/50 text-red-200'
               : 'bg-zinc-900/95 border-orange-500/50 text-white'
@@ -568,14 +561,13 @@ export default function App() {
         </div>
       )}
 
-      {/* Aviso superior de lanzamiento si está activo */}
       {launchAd && (
-        <div className="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 text-zinc-950 px-4 py-2 text-center text-[11px] font-black tracking-wide">
+        <div className="bg-orange-500 text-zinc-950 px-4 py-1.5 text-center text-[11px] font-black">
           {launchAd.launchNote}
         </div>
       )}
 
-      {/* Encabezado principal */}
+      {/* Encabezado limpio */}
       <header className="sticky top-0 z-30 bg-[#0A0A0C]/90 backdrop-blur-md border-b border-zinc-800/80">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <div
@@ -585,38 +577,31 @@ export default function App() {
               setSelectedSubcategory('all');
               setSelectedAllyFilter('all');
             }}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center gap-2"
           >
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-white">
-                {settings.brandName}
-              </span>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                CALIDAD ÁPEX
-              </span>
-            </div>
-            <p className="text-[10px] text-zinc-400 truncate max-w-[210px]">
-              {settings.tagline}
-            </p>
+            <span className="text-lg font-black tracking-tight text-white">
+              {settings.brandName}
+            </span>
+            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+              ✓ Calidad
+            </span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <a
-              href={`https://wa.me/${settings.whatsappPhone}?text=${encodeURIComponent(
-                'Hola equipo ÁPEX, necesito asesoría técnica o información para ser aliado.'
-              )}`}
+              href={`https://wa.me/${settings.whatsappPhone}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
-              title="Asesoría técnica por WhatsApp"
+              className="p-2 rounded-xl bg-[#141418] border border-zinc-800 text-emerald-400"
+              title="WhatsApp"
             >
               <MessageCircle className="w-4 h-4" />
             </a>
 
             <button
               onClick={() => setActiveTab('cart')}
-              className="relative p-2 rounded-xl bg-[#141418] border border-zinc-800 text-white hover:border-orange-500/50"
-              title="Carrito"
+              className="relative p-2 rounded-xl bg-[#141418] border border-zinc-800 text-white"
+              title="Pedido"
             >
               <ShoppingBag className="w-4 h-4 text-orange-400" />
               {cart.length > 0 && (
@@ -629,337 +614,183 @@ export default function App() {
         </div>
       </header>
 
-      {/* Contenedor principal tipo móvil */}
-      <main className="max-w-md mx-auto px-4 pt-4 space-y-5">
+      <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
         {/* =======================================================
-            PESTAÑA 1: CATÁLOGO DE 10 SECCIONES + ALIADOS ÁPEX
+            PESTAÑA CATÁLOGO (LIMPIA Y FLUIDA)
         ======================================================= */}
         {activeTab === 'catalog' && (
-          <div className="space-y-5">
-            {/* Buscador + Selector de Rol de Precio */}
-            <div className="space-y-2.5">
-              <div className="relative">
-                <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="space-y-4">
+            {/* Buscador y Rol */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar producto, aliado, taller, médico o servicio..."
-                  className="w-full bg-[#141418] border border-zinc-800 rounded-2xl pl-9 pr-4 py-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-orange-500"
+                  placeholder="Buscar..."
+                  className="w-full bg-[#141418] border border-zinc-800 rounded-2xl pl-9 pr-3 py-2 text-xs text-white outline-none focus:border-orange-500"
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-2 bg-[#141418] border border-zinc-800 rounded-2xl p-1.5 text-[11px]">
-                <span className="text-zinc-400 pl-2 font-semibold">Lista de precios:</span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setPriceRole('consumer')}
-                    className={`px-3 py-1 rounded-xl font-extrabold transition ${
-                      priceRole === 'consumer'
-                        ? 'bg-orange-500 text-white'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Particular
-                  </button>
-                  <button
-                    onClick={() => setPriceRole('dealer')}
-                    className={`px-3 py-1 rounded-xl font-extrabold transition ${
-                      priceRole === 'dealer'
-                        ? 'bg-amber-400 text-zinc-950'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Tienda / Mayor
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() =>
+                  setPriceRole((r) => (r === 'consumer' ? 'dealer' : 'consumer'))
+                }
+                className={`px-3 py-2 rounded-2xl text-[11px] font-extrabold border shrink-0 ${
+                  priceRole === 'dealer'
+                    ? 'bg-amber-400 border-amber-400 text-zinc-950'
+                    : 'bg-[#141418] border-zinc-800 text-zinc-200'
+                }`}
+              >
+                {priceRole === 'dealer' ? 'Mayorista' : 'Particular'}
+              </button>
             </div>
 
-            {/* Banner publicitario activo */}
-            {activeAds[0] && (
-              <div className="bg-[#141418] border border-zinc-800 rounded-3xl overflow-hidden">
-                {activeAds[0].image && (
-                  <img
-                    src={activeAds[0].image}
-                    alt={activeAds[0].title}
-                    className="w-full h-36 object-cover"
-                  />
-                )}
-                <div className="p-4 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-orange-400">
-                      {activeAds[0].tag || 'Publicidad'} • {activeAds[0].advertiser}
-                    </span>
-                    <h2 className="text-sm font-black text-white mt-0.5">
-                      {activeAds[0].title}
-                    </h2>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">
-                      {activeAds[0].description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 10 SECCIONES EN EL ORDEN EXACTO DEFINIDO */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-orange-400" /> Secciones del Ecosistema (10)
+            {/* Filtro activo si se eligió una categoría desde el menú */}
+            {(selectedVertical !== 'all' || selectedAllyFilter !== 'all') && (
+              <div className="flex items-center justify-between bg-[#141418] border border-orange-500/30 rounded-2xl px-3.5 py-2 text-xs">
+                <span className="font-bold text-orange-300 truncate">
+                  {activeVerticalObj ? activeVerticalObj.name : 'Aliado seleccionado'}
+                  {selectedSubcategory !== 'all' ? ` • ${selectedSubcategory}` : ''}
                 </span>
-                {selectedVertical !== 'all' && (
-                  <button
-                    onClick={() => {
-                      setSelectedVertical('all');
-                      setSelectedSubcategory('all');
-                      setSelectedAllyFilter('all');
-                    }}
-                    className="text-[11px] font-bold text-orange-400 underline"
-                  >
-                    Ver todas
-                  </button>
-                )}
-              </div>
-
-              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                 <button
                   onClick={() => {
                     setSelectedVertical('all');
                     setSelectedSubcategory('all');
+                    setSelectedAllyFilter('all');
                   }}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap border transition ${
-                    selectedVertical === 'all'
-                      ? 'bg-orange-500 border-orange-500 text-white'
-                      : 'bg-[#141418] border-zinc-800 text-zinc-300 hover:border-zinc-700'
-                  }`}
+                  className="text-[11px] font-extrabold text-zinc-300 underline ml-2 shrink-0"
                 >
-                  Todas (10)
+                  Limpiar
                 </button>
-
-                {VERTICALS.map((v, index) => {
-                  const active = selectedVertical === v.id;
-                  return (
-                    <button
-                      key={v.id}
-                      onClick={() => {
-                        setSelectedVertical(v.id);
-                        setSelectedSubcategory('all');
-                      }}
-                      className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap border transition ${
-                        active
-                          ? 'bg-orange-500 border-orange-500 text-white'
-                          : 'bg-[#141418] border-zinc-800 text-zinc-300 hover:border-zinc-700'
-                      }`}
-                    >
-                      {index + 1}. {v.name}
-                    </button>
-                  );
-                })}
               </div>
-            </div>
+            )}
 
-            {/* Subcategorías de la sección elegida */}
-            {activeVerticalObj && (
-              <div className="bg-[#141418] border border-zinc-800 rounded-2xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold text-white">
-                    {activeVerticalObj.name}
-                  </span>
-                  <span className="text-[10px] text-zinc-400">Subsecciones</span>
-                </div>
-                <p className="text-[11px] text-zinc-400">
-                  {activeVerticalObj.description}
-                </p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
+            {/* Banner visual */}
+            {activeAds[0]?.image && (
+              <div className="rounded-3xl overflow-hidden border border-zinc-800 bg-[#141418]">
+                <img
+                  src={activeAds[0].image}
+                  alt={activeAds[0].title}
+                  className="w-full h-32 object-cover"
+                />
+                <div className="px-4 py-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-white truncate">
+                      {activeAds[0].title}
+                    </p>
+                    <p className="text-[11px] text-zinc-400 truncate">
+                      {activeAds[0].advertiser}
+                    </p>
+                  </div>
                   <button
-                    onClick={() => setSelectedSubcategory('all')}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold ${
-                      selectedSubcategory === 'all'
-                        ? 'bg-white text-zinc-950'
-                        : 'bg-[#0A0A0C] text-zinc-400 border border-zinc-800'
-                    }`}
+                    onClick={() => setCategoryMenuOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-orange-500/15 text-orange-400 text-[11px] font-extrabold shrink-0"
                   >
-                    Todo
+                    15 Secciones
                   </button>
-                  {activeVerticalObj.subcategories.map((sub) => (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubcategory(sub)}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold ${
-                        selectedSubcategory === sub
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-[#0A0A0C] text-zinc-300 border border-zinc-800'
-                      }`}
-                    >
-                      {sub}
-                    </button>
-                  ))}
                 </div>
               </div>
             )}
 
-            {/* ALIADOS VERIFICADOS CON SELLO DE CALIDAD ÁPEX */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-emerald-400" /> Aliados con Sello Calidad ÁPEX
-                </span>
-                {selectedAllyFilter !== 'all' && (
+            {/* Fila compacta de aliados verificados */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {visibleAllies.map((ally) => {
+                const active = selectedAllyFilter === ally.id;
+                return (
                   <button
-                    onClick={() => setSelectedAllyFilter('all')}
-                    className="text-[11px] font-bold text-orange-400 underline"
+                    key={ally.id}
+                    onClick={() =>
+                      setSelectedAllyFilter(active ? 'all' : ally.id)
+                    }
+                    className={`px-3 py-2 rounded-2xl border text-left whitespace-nowrap transition ${
+                      active
+                        ? 'bg-orange-500 border-orange-500 text-white'
+                        : 'bg-[#141418] border-zinc-800 text-zinc-200'
+                    }`}
                   >
-                    Mostrar todos
+                    <span className="text-xs font-extrabold block">
+                      {ally.brandName}
+                    </span>
+                    <span className="text-[10px] opacity-75">
+                      {ally.shortName || ally.subcategory}
+                    </span>
                   </button>
-                )}
-              </div>
-
-              <div className="flex gap-2.5 overflow-x-auto pb-1">
-                {visibleAllies.map((ally) => {
-                  const isSelected = selectedAllyFilter === ally.id;
-                  return (
-                    <div
-                      key={ally.id}
-                      onClick={() =>
-                        setSelectedAllyFilter(isSelected ? 'all' : ally.id)
-                      }
-                      className={`min-w-[225px] rounded-2xl p-3 border cursor-pointer transition space-y-1.5 ${
-                        isSelected
-                          ? 'bg-orange-500/15 border-orange-500'
-                          : 'bg-[#141418] border-zinc-800 hover:border-zinc-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-extrabold text-xs text-white truncate">
-                          {ally.brandName}
-                        </span>
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-                          ✓ ÁPEX
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-orange-300 font-semibold truncate">
-                        {ally.subcategory} • {ally.city}
-                      </p>
-                      <p className="text-[10px] text-zinc-400 line-clamp-2">
-                        {ally.bio}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
 
-            {/* LISTADO DE PRODUCTOS Y SERVICIOS */}
+            {/* Tarjetas de productos y servicios */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-white">
-                  Stock y Servicios ({filteredItems.length})
-                </span>
-                <span className="text-[10px] text-zinc-400">
-                  Toca una tarjeta para ver fotos y ficha
-                </span>
-              </div>
+              {filteredItems.map((item) => {
+                const ally = allies.find((a) => a.id === item.allyId);
+                const unitPrice = getUnitPrice(item);
+                const photoCount = Array.isArray(item.images) ? item.images.length : 1;
+                const coverImg =
+                  item.images?.[0] ||
+                  'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=800&q=80';
 
-              {filteredItems.length === 0 ? (
-                <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 text-center space-y-2">
-                  <SlidersHorizontal className="w-6 h-6 text-zinc-500 mx-auto" />
-                  <p className="text-xs font-bold text-white">
-                    No hay ítems con ese filtro todavía
-                  </p>
-                  <button
+                return (
+                  <div
+                    key={item.id}
                     onClick={() => {
-                      setSelectedVertical('all');
-                      setSelectedSubcategory('all');
-                      setSelectedAllyFilter('all');
-                      setSearchQuery('');
+                      setDetailItem(item);
+                      setDetailPhotoIdx(0);
                     }}
-                    className="px-4 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-extrabold"
+                    className="bg-[#141418] border border-zinc-800 hover:border-orange-500/40 rounded-3xl p-3 flex gap-3 cursor-pointer transition"
                   >
-                    Restablecer filtros
-                  </button>
-                </div>
-              ) : (
-                filteredItems.map((item) => {
-                  const ally = allies.find((a) => a.id === item.allyId);
-                  const unitPrice = getUnitPrice(item);
-                  const photoCount = Array.isArray(item.images) ? item.images.length : 1;
-                  const coverImg =
-                    item.images?.[0] ||
-                    'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=800&q=80';
+                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-zinc-900 shrink-0">
+                      <img
+                        src={coverImg}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                      {photoCount > 1 && (
+                        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[9px] font-bold text-white">
+                          {photoCount} fotos
+                        </span>
+                      )}
+                    </div>
 
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        setDetailItem(item);
-                        setDetailPhotoIdx(0);
-                      }}
-                      className="bg-[#141418] border border-zinc-800 hover:border-orange-500/40 rounded-3xl p-3.5 flex gap-3.5 cursor-pointer transition"
-                    >
-                      <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-zinc-900 shrink-0">
-                        <img
-                          src={coverImg}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {photoCount > 1 && (
-                          <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/80 text-[10px] font-bold text-white">
-                            1/{photoCount}
-                          </span>
-                        )}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-orange-400 block truncate">
+                          {ally?.brandName || 'ÁPEX'}
+                        </span>
+                        <h3 className="text-xs font-extrabold text-white line-clamp-1">
+                          {item.name}
+                        </h3>
                       </div>
 
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex items-center justify-between pt-1">
                         <div>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-[10px] font-extrabold text-orange-400 truncate">
-                              {ally?.brandName || 'Aliado ÁPEX'}
-                            </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 shrink-0">
-                              Sello ÁPEX
-                            </span>
-                          </div>
-                          <h3 className="text-xs font-extrabold text-white line-clamp-2 mt-0.5">
-                            {item.name}
-                          </h3>
-                          <p className="text-[10px] text-zinc-400 truncate mt-0.5">
-                            {item.spec}
-                          </p>
+                          <span className="text-sm font-black text-white">
+                            ${unitPrice.toFixed(2)}
+                          </span>
+                          <span className="text-[10px] text-amber-400 font-bold ml-2">
+                            +{item.buyerPoints || Math.round(unitPrice * 5)} pts
+                          </span>
                         </div>
 
-                        <div className="flex items-end justify-between gap-2 pt-2">
-                          <div>
-                            <div className="text-sm font-black text-white">
-                              ${unitPrice.toFixed(2)}
-                            </div>
-                            <div className="text-[10px] text-amber-400 font-bold">
-                              +{item.buyerPoints || Math.round(unitPrice * 5)} pts comprador
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(item, 1);
-                            }}
-                            className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-extrabold"
-                          >
-                            + Pedir
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item, 1);
+                          }}
+                          className="px-3 py-1 rounded-xl bg-orange-500 text-white text-[11px] font-extrabold"
+                        >
+                          + Pedir
+                        </button>
                       </div>
                     </div>
-                  );
-                })
-              )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* =======================================================
-            PESTAÑA 2: COMUNIDAD VERIFICADA, SEGUIMIENTO Y QR
-        ======================================================= */}
         {activeTab === 'social' && (
           <SocialAndTracking
             currentUser={currentUser}
@@ -976,103 +807,93 @@ export default function App() {
           />
         )}
 
-        {/* =======================================================
-            PESTAÑA 3: CARRITO Y CONFIRMACIÓN DE PEDIDO
-        ======================================================= */}
         {activeTab === 'cart' && (
           <div className="space-y-4 text-xs">
-            <h2 className="text-base font-black text-white">Tu Pedido en ÁPEX</h2>
-
+            <h2 className="text-base font-black text-white">Tu Pedido</h2>
             {cart.length === 0 ? (
               <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 text-center space-y-3">
-                <p className="text-zinc-400">Aún no has agregado productos o servicios.</p>
+                <p className="text-zinc-400">Tu carrito está vacío.</p>
                 <button
                   onClick={() => setActiveTab('catalog')}
                   className="px-4 py-2 rounded-xl bg-orange-500 text-white font-extrabold"
                 >
-                  Explorar Secciones
+                  Ir al catálogo
                 </button>
               </div>
             ) : (
               <>
-                <div className="space-y-2.5">
-                  {cart.map(({ item, qty }) => {
-                    const unit = getUnitPrice(item);
-                    return (
-                      <div
-                        key={item.id}
-                        className="bg-[#141418] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0">
-                          <h4 className="font-extrabold text-white truncate">{item.name}</h4>
-                          <p className="text-[11px] text-zinc-400">
-                            ${unit.toFixed(2)} c/u • Subtotal: ${(unit * qty).toFixed(2)}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => updateCartQty(item.id, -1)}
-                            className="p-1.5 rounded-lg bg-[#0A0A0C] border border-zinc-800 text-white"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-6 text-center font-black">{qty}</span>
-                          <button
-                            onClick={() => updateCartQty(item.id, 1)}
-                            className="p-1.5 rounded-lg bg-[#0A0A0C] border border-zinc-800 text-white"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => updateCartQty(item.id, -qty)}
-                            className="p-1.5 rounded-lg bg-[#0A0A0C] border border-zinc-800 text-red-400"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
+                <div className="space-y-2">
+                  {cart.map(({ item, qty }) => (
+                    <div
+                      key={item.id}
+                      className="bg-[#141418] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-white truncate">{item.name}</h4>
+                        <p className="text-[11px] text-zinc-400">
+                          ${(getUnitPrice(item) * qty).toFixed(2)}
+                        </p>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => updateCartQty(item.id, -1)}
+                          className="p-1.5 rounded-lg bg-[#0A0A0C] text-white"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-5 text-center font-black">{qty}</span>
+                        <button
+                          onClick={() => updateCartQty(item.id, 1)}
+                          className="p-1.5 rounded-lg bg-[#0A0A0C] text-white"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => updateCartQty(item.id, -qty)}
+                          className="p-1.5 rounded-lg bg-[#0A0A0C] text-red-400"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Resumen de doble acumulación de puntos */}
-                <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-2">
-                  <div className="flex justify-between text-zinc-300">
-                    <span>Total Referencial USD</span>
-                    <span className="font-black text-white text-sm">
+                <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Total USD</span>
+                    <span className="font-black text-white">
                       ${cartTotals.subtotal.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Equivalente Bs. (Tasa {settings.exchangeRateBs})</span>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Total Bs.</span>
                     <span className="font-bold text-emerald-400">
                       Bs. {cartTotals.totalBs.toFixed(2)}
                     </span>
                   </div>
-                  <div className="pt-2 border-t border-zinc-800 flex justify-between text-[11px]">
+                  <div className="flex justify-between pt-1.5 border-t border-zinc-800 text-[11px]">
                     <span className="text-amber-400 font-bold">
-                      +{cartTotals.buyerPoints} pts para ti
+                      +{cartTotals.buyerPoints} pts comprador
                     </span>
                     <span className="text-emerald-400 font-bold">
-                      +{cartTotals.sellerPoints} pts para el aliado
+                      +{cartTotals.sellerPoints} pts aliado
                     </span>
                   </div>
                 </div>
 
                 <form
                   onSubmit={handleConfirmOrder}
-                  className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3"
+                  className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-2.5"
                 >
                   <input
                     type="text"
                     required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="Tu teléfono / WhatsApp de contacto *"
+                    placeholder="Teléfono de contacto *"
                     className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                   />
-
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
@@ -1080,30 +901,27 @@ export default function App() {
                   >
                     <option value="Pago Móvil">Pago Móvil</option>
                     <option value="Transferencia">Transferencia</option>
-                    <option value="Efectivo / Divisas">Efectivo / Divisas</option>
+                    <option value="Efectivo">Efectivo</option>
                   </select>
-
                   <input
                     type="text"
                     value={paymentRef}
                     onChange={(e) => setPaymentRef(e.target.value)}
-                    placeholder="Número de referencia o nota de pago (opcional)"
+                    placeholder="Referencia (opcional)"
                     className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                   />
-
                   <input
                     type="text"
                     value={customerNotes}
                     onChange={(e) => setCustomerNotes(e.target.value)}
-                    placeholder="Observaciones o dirección de entrega"
+                    placeholder="Nota de entrega (opcional)"
                     className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
                   />
-
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-black"
+                    className="w-full py-3 rounded-2xl bg-emerald-500 text-zinc-950 font-black"
                   >
-                    Confirmar Pedido y Enviar por WhatsApp
+                    Confirmar Pedido
                   </button>
                 </form>
               </>
@@ -1111,20 +929,13 @@ export default function App() {
           </div>
         )}
 
-        {/* =======================================================
-            PESTAÑA 4: PERFIL DE COMPRADOR Y PUNTOS CRUZADOS
-        ======================================================= */}
         {activeTab === 'profile' && (
           <div className="space-y-4 text-xs">
             {!currentUser ? (
               <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 text-center space-y-3">
                 <User className="w-8 h-8 text-orange-400 mx-auto" />
-                <h2 className="text-base font-black text-white">Perfil de Comprador ÁPEX</h2>
-                <p className="text-zinc-400">
-                  Crea tu perfil para acumular puntos canjeables entre aliados, usar tu QR social,
-                  recibir seguimiento de mantenimiento y publicar reseñas de tus compras.
-                </p>
-                <div className="flex gap-2 justify-center pt-1">
+                <h2 className="text-base font-black text-white">Tu Perfil ÁPEX</h2>
+                <div className="flex gap-2 justify-center">
                   <button
                     onClick={() => setAuthModalMode('register')}
                     className="px-4 py-2 rounded-xl bg-orange-500 text-white font-extrabold"
@@ -1135,100 +946,49 @@ export default function App() {
                     onClick={() => setAuthModalMode('login')}
                     className="px-4 py-2 rounded-xl bg-zinc-800 text-white font-extrabold"
                   >
-                    Iniciar Sesión
+                    Entrar
                   </button>
                 </div>
               </div>
             ) : (
-              <>
-                <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h2 className="text-base font-black text-white">{currentUser.name}</h2>
-                      <p className="text-zinc-400">{currentUser.handle} • {currentUser.email}</p>
-                      <p className="text-[11px] font-mono text-orange-400 mt-1">
-                        Código de invitación: {currentUser.referralCode}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setCurrentUserId(null);
-                        showToast('Sesión cerrada');
-                      }}
-                      className="p-2 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-zinc-400 hover:text-white"
-                      title="Cerrar sesión"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </button>
+              <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-base font-black text-white">{currentUser.name}</h2>
+                    <p className="text-zinc-400">{currentUser.handle}</p>
                   </div>
-
-                  <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-zinc-400 uppercase font-bold block">
-                        Puntos ÁPEX Disponibles
-                      </span>
-                      <span className="text-xl font-black text-amber-400">
-                        {Number(currentUser.points || 0)} pts
-                      </span>
-                    </div>
-                    <Award className="w-7 h-7 text-amber-400" />
+                  <button
+                    onClick={() => setCurrentUserId(null)}
+                    className="p-2 rounded-xl bg-[#0A0A0C] text-zinc-400"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 block">Puntos ÁPEX</span>
+                    <span className="text-xl font-black text-amber-400">
+                      {Number(currentUser.points || 0)} pts
+                    </span>
                   </div>
+                  <Award className="w-6 h-6 text-amber-400" />
                 </div>
-
-                {/* Historial de compras del usuario */}
-                <div className="space-y-2.5">
-                  <h3 className="font-extrabold text-white">Mis Compras Verificadas</h3>
-                  {ordersHistory.filter((o) => o.userId === currentUser.id).length === 0 ? (
-                    <div className="bg-[#141418] border border-zinc-800 rounded-2xl p-4 text-zinc-400">
-                      Aún no tienes pedidos completados.
-                    </div>
-                  ) : (
-                    ordersHistory
-                      .filter((o) => o.userId === currentUser.id)
-                      .map((ord) => (
-                        <div
-                          key={ord.id}
-                          className="bg-[#141418] border border-zinc-800 rounded-2xl p-3.5 space-y-1"
-                        >
-                          <div className="flex justify-between font-bold">
-                            <span className="font-mono text-white">{ord.id}</span>
-                            <span className="text-emerald-400">
-                              ${Number(ord.total || 0).toFixed(2)}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-zinc-300">{ord.itemsSummary}</p>
-                          <p className="text-[10px] text-amber-400 font-bold">
-                            +{ord.buyerPoints} pts acumulados • {ord.allyName}
-                          </p>
-                        </div>
-                      ))
-                  )}
-                </div>
-              </>
+              </div>
             )}
           </div>
         )}
 
-        {/* =======================================================
-            PESTAÑA 5: PANEL ADMINISTRADOR ÁPEX
-        ======================================================= */}
         {activeTab === 'admin' && (
           <div className="space-y-4 text-xs">
             {!adminUnlocked ? (
               <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-6 space-y-3 text-center">
                 <ShieldCheck className="w-8 h-8 text-orange-400 mx-auto" />
-                <h2 className="text-base font-black text-white">
-                  Acceso del Equipo Administrador ÁPEX
-                </h2>
-                <p className="text-zinc-400">
-                  Solo el equipo técnico y evaluador de ÁPEX puede aprobar aliados, crear
-                  perfiles, cargar stock con hasta 10 fotos y subir publicidades.
-                </p>
+                <h2 className="text-base font-black text-white">Equipo Administrador ÁPEX</h2>
                 <input
                   type="password"
                   value={adminPinInput}
                   onChange={(e) => setAdminPinInput(e.target.value)}
-                  placeholder="PIN de administrador (por defecto: 2026)"
+                  placeholder="PIN (2026)"
                   className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-center text-white outline-none"
                 />
                 <button
@@ -1236,14 +996,13 @@ export default function App() {
                     if (adminPinInput.trim() === String(settings.adminPin || '2026')) {
                       setAdminUnlocked(true);
                       setAdminPinInput('');
-                      showToast('Panel de administración desbloqueado');
                     } else {
                       showToast('PIN incorrecto', 'error');
                     }
                   }}
                   className="w-full py-2.5 rounded-xl bg-orange-500 text-white font-extrabold"
                 >
-                  Entrar al Panel
+                  Desbloquear
                 </button>
               </div>
             ) : (
@@ -1257,7 +1016,7 @@ export default function App() {
                         : 'text-zinc-400'
                     }`}
                   >
-                    Ecosistema, Aliados y 10 Fotos
+                    Aliados y Stock
                   </button>
                   <button
                     onClick={() => setAdminSubView('settings')}
@@ -1267,7 +1026,7 @@ export default function App() {
                         : 'text-zinc-400'
                     }`}
                   >
-                    WhatsApp y Tasa
+                    Ajustes
                   </button>
                 </div>
 
@@ -1299,11 +1058,8 @@ export default function App() {
                   />
                 ) : (
                   <div className="bg-[#141418] border border-zinc-800 rounded-3xl p-4 space-y-3">
-                    <h3 className="font-extrabold text-white">Configuración General ÁPEX</h3>
                     <div>
-                      <label className="text-[10px] text-zinc-400 block mb-1">
-                        WhatsApp de pedidos y evaluación (con código país, ej: 584141470773)
-                      </label>
+                      <label className="text-[10px] text-zinc-400 block mb-1">WhatsApp</label>
                       <input
                         type="text"
                         value={settings.whatsappPhone}
@@ -1314,9 +1070,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-zinc-400 block mb-1">
-                        Tasa de cambio referencial (Bs. por $1)
-                      </label>
+                      <label className="text-[10px] text-zinc-400 block mb-1">Tasa Bs.</label>
                       <input
                         type="number"
                         step="0.01"
@@ -1334,7 +1088,7 @@ export default function App() {
                       onClick={() => setAdminUnlocked(false)}
                       className="w-full py-2 rounded-xl bg-zinc-800 text-zinc-200 font-bold"
                     >
-                      Bloquear Panel Admin
+                      Bloquear
                     </button>
                   </div>
                 )}
@@ -1345,7 +1099,110 @@ export default function App() {
       </main>
 
       {/* =======================================================
-          MODAL DE DETALLE CON CARRUSEL DE HASTA 10 FOTOS
+          MENÚ DE CATEGORÍAS A PANTALLA COMPLETA (15 SECCIONES)
+      ======================================================= */}
+      {categoryMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-[#0A0A0C] text-white flex flex-col">
+          <div className="px-4 py-3.5 border-b border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="w-4 h-4 text-orange-400" />
+              <span className="text-sm font-black">Categorías ÁPEX</span>
+            </div>
+            <button
+              onClick={() => setCategoryMenuOpen(false)}
+              className="p-2 rounded-xl bg-[#141418] border border-zinc-800 text-zinc-300 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 max-w-md w-full mx-auto">
+            <button
+              onClick={() => {
+                setSelectedVertical('all');
+                setSelectedSubcategory('all');
+                setActiveTab('catalog');
+                setCategoryMenuOpen(false);
+              }}
+              className={`w-full px-4 py-3 rounded-2xl border flex items-center justify-between text-xs font-extrabold ${
+                selectedVertical === 'all'
+                  ? 'bg-orange-500 border-orange-500 text-white'
+                  : 'bg-[#141418] border-zinc-800 text-zinc-200'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <LayoutGrid className="w-4 h-4" />
+                <span>Todas las secciones</span>
+              </span>
+            </button>
+
+            {VERTICALS.map((v) => {
+              const IconComp = getVerticalIcon(v.id);
+              const isExpanded = expandedVerticalId === v.id;
+              const isSelected = selectedVertical === v.id;
+
+              return (
+                <div
+                  key={v.id}
+                  className="bg-[#141418] border border-zinc-800 rounded-2xl overflow-hidden"
+                >
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <button
+                      onClick={() => {
+                        setSelectedVertical(v.id);
+                        setSelectedSubcategory('all');
+                        setActiveTab('catalog');
+                        setCategoryMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 text-left flex-1 min-w-0"
+                    >
+                      <IconComp
+                        className={`w-4 h-4 shrink-0 ${
+                          isSelected ? 'text-orange-400' : 'text-zinc-300'
+                        }`}
+                      />
+                      <span className="text-xs font-extrabold text-white truncate">
+                        {v.name}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setExpandedVerticalId(isExpanded ? null : v.id)
+                      }
+                      className="text-[11px] font-bold text-zinc-400 hover:text-orange-400 px-2 py-1"
+                    >
+                      {isExpanded ? '−' : '+'}
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-3 pt-1 border-t border-zinc-800/70 flex flex-wrap gap-1.5">
+                      {v.subcategories.map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => {
+                            setSelectedVertical(v.id);
+                            setSelectedSubcategory(sub);
+                            setActiveTab('catalog');
+                            setCategoryMenuOpen(false);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-[#0A0A0C] border border-zinc-800 text-[11px] font-semibold text-zinc-200 hover:border-orange-500"
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* =======================================================
+          MODAL DETALLE CON GALERÍA DE HASTA 10 FOTOS
       ======================================================= */}
       {detailItem && (
         <div
@@ -1354,135 +1211,99 @@ export default function App() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#141418] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-4 space-y-4 text-xs"
+            className="bg-[#141418] border border-zinc-800 rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-4 space-y-3.5 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <span className="text-[10px] font-extrabold text-emerald-400 uppercase">
-                  ✓ Sello de Calidad Aprobado ÁPEX
+                <span className="text-[10px] font-extrabold text-emerald-400">
+                  ✓ Sello Calidad ÁPEX
                 </span>
-                <h3 className="text-base font-black text-white mt-0.5">{detailItem.name}</h3>
+                <h3 className="text-sm font-black text-white mt-0.5">{detailItem.name}</h3>
               </div>
               <button
                 onClick={() => setDetailItem(null)}
-                className="p-1.5 rounded-xl bg-[#0A0A0C] text-zinc-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#0A0A0C] text-zinc-400"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Carrusel de fotos (hasta 10) */}
-            <div className="space-y-2">
-              <div className="relative h-56 rounded-2xl overflow-hidden bg-zinc-900">
-                <img
-                  src={detailPhotos[detailPhotoIdx] || detailPhotos[0]}
-                  alt={detailItem.name}
-                  className="w-full h-full object-cover"
-                />
-                {detailPhotos.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDetailPhotoIdx((prev) =>
-                          prev === 0 ? detailPhotos.length - 1 : prev - 1
-                        )
-                      }
-                      className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/70 text-white"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDetailPhotoIdx((prev) => (prev + 1) % detailPhotos.length)
-                      }
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/70 text-white"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg bg-black/75 text-[10px] font-bold text-white">
-                  Foto {detailPhotoIdx + 1} de {detailPhotos.length}
-                </span>
-              </div>
-
+            <div className="relative h-56 rounded-2xl overflow-hidden bg-zinc-900">
+              <img
+                src={detailPhotos[detailPhotoIdx] || detailPhotos[0]}
+                alt={detailItem.name}
+                className="w-full h-full object-cover"
+              />
               {detailPhotos.length > 1 && (
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {detailPhotos.map((src, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setDetailPhotoIdx(idx)}
-                      className={`w-12 h-12 rounded-xl overflow-hidden border shrink-0 ${
-                        detailPhotoIdx === idx ? 'border-orange-500' : 'border-zinc-800 opacity-60'
-                      }`}
-                    >
-                      <img src={src} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDetailPhotoIdx((prev) =>
+                        prev === 0 ? detailPhotos.length - 1 : prev - 1
+                      )
+                    }
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/70 text-white"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDetailPhotoIdx((prev) => (prev + 1) % detailPhotos.length)
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/70 text-white"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
               )}
+              <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg bg-black/75 text-[10px] font-bold">
+                {detailPhotoIdx + 1} / {detailPhotos.length}
+              </span>
             </div>
 
-            {/* Ficha técnica y respaldo */}
-            <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-3 space-y-1.5 text-[11px]">
+            <div className="bg-[#0A0A0C] border border-zinc-800 rounded-2xl p-3 space-y-1 text-[11px]">
               <div className="flex justify-between">
-                <span className="text-zinc-400">Especificación:</span>
-                <span className="text-white font-semibold text-right">
+                <span className="text-zinc-400">Especificación</span>
+                <span className="text-white font-semibold">
                   {detailItem.techSpecs?.gradeOrMaterial || detailItem.spec}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Calidad / Norma:</span>
-                <span className="text-emerald-400 font-semibold text-right">
-                  {detailItem.techSpecs?.normOrCert || 'Verificado ÁPEX'}
-                </span>
+                <span className="text-zinc-400">Stock</span>
+                <span className="text-white font-bold">{detailItem.stock}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Stock disponible:</span>
-                <span className="text-white font-bold">{detailItem.stock} und.</span>
-              </div>
-              {detailItem.recommendation?.difference && (
-                <p className="text-zinc-300 pt-1.5 border-t border-zinc-800/80">
-                  {detailItem.recommendation.difference}
-                </p>
-              )}
             </div>
 
             <div className="flex items-center justify-between pt-1">
               <div>
-                <div className="text-lg font-black text-white">
+                <span className="text-lg font-black text-white block">
                   ${getUnitPrice(detailItem).toFixed(2)}
-                </div>
-                <div className="text-[10px] text-amber-400 font-bold">
-                  +{detailItem.buyerPoints || Math.round(getUnitPrice(detailItem) * 5)} pts comprador • +
-                  {detailItem.sellerPoints || 25} pts aliado
-                </div>
+                </span>
+                <span className="text-[10px] text-amber-400 font-bold">
+                  +{detailItem.buyerPoints || Math.round(getUnitPrice(detailItem) * 5)} pts
+                </span>
               </div>
-
               <button
                 onClick={() => {
                   addToCart(detailItem, 1);
                   setDetailItem(null);
                 }}
-                className="px-5 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black"
+                className="px-5 py-2.5 rounded-2xl bg-orange-500 text-white font-black"
               >
-                Agregar al Pedido
+                Agregar
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* =======================================================
-          MODAL DE LOGIN / REGISTRO DE COMPRADOR
-      ======================================================= */}
+      {/* MODAL LOGIN / REGISTRO */}
       {authModalMode && (
         <div
           onClick={() => setAuthModalMode(null)}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
         >
           <form
             onClick={(e) => e.stopPropagation()}
@@ -1491,12 +1312,12 @@ export default function App() {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">
-                {authModalMode === 'login' ? 'Iniciar Sesión' : 'Crear Perfil en ÁPEX'}
+                {authModalMode === 'login' ? 'Entrar' : 'Crear Cuenta'}
               </h3>
               <button
                 type="button"
                 onClick={() => setAuthModalMode(null)}
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1508,7 +1329,7 @@ export default function App() {
                 required
                 value={authForm.name}
                 onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
-                placeholder="Tu nombre completo *"
+                placeholder="Nombre completo *"
                 className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
               />
             )}
@@ -1518,35 +1339,30 @@ export default function App() {
               required
               value={authForm.email}
               onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-              placeholder="Correo electrónico *"
+              placeholder="Correo *"
               className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
             />
-
-            {authModalMode === 'register' && (
-              <input
-                type="text"
-                value={authForm.referralInput}
-                onChange={(e) =>
-                  setAuthForm({ ...authForm, referralInput: e.target.value })
-                }
-                placeholder="Código de invitación (opcional)"
-                className="w-full bg-[#0A0A0C] border border-zinc-800 rounded-xl px-3 py-2 text-white outline-none"
-              />
-            )}
 
             <button
               type="submit"
               className="w-full py-2.5 rounded-xl bg-orange-500 text-white font-extrabold"
             >
-              {authModalMode === 'login' ? 'Entrar' : 'Registrarme y Ganar Puntos'}
+              Continuar
             </button>
           </form>
         </div>
       )}
 
-      {/* =======================================================
-          BARRA DE NAVEGACIÓN INFERIOR FIJA
-      ======================================================= */}
+      {/* BOTÓN FLOTANTE DE CATEGORÍAS ABAJO A LA IZQUIERDA */}
+      <button
+        onClick={() => setCategoryMenuOpen(true)}
+        className="fixed bottom-16 left-4 z-40 px-3.5 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white shadow-xl flex items-center gap-2 text-xs font-black transition"
+      >
+        <LayoutGrid className="w-4 h-4" />
+        <span>Categorías</span>
+      </button>
+
+      {/* BARRA INFERIOR PRINCIPAL */}
       <nav className="fixed bottom-0 inset-x-0 z-30 bg-[#0A0A0C]/95 backdrop-blur-md border-t border-zinc-800">
         <div className="max-w-md mx-auto grid grid-cols-4 px-2 py-1.5 text-[10px] font-extrabold">
           <button
@@ -1556,7 +1372,7 @@ export default function App() {
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Secciones</span>
+            <span>Inicio</span>
           </button>
 
           <button
