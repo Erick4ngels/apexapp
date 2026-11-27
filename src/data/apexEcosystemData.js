@@ -1,4 +1,4 @@
-// Base de datos estructurada del Ecosistema Curado y Red Social ÁPEX
+// Base de datos estructurada del Ecosistema Curado y Red Social ÁPEX (15 Secciones)
 
 export const VERTICALS = [
   {
@@ -25,7 +25,7 @@ export const VERTICALS = [
   {
     id: 'belleza',
     name: 'Mujer y belleza',
-    shortName: 'Mujer y belleza',
+    shortName: 'Belleza',
     description: 'Cosmética, accesorios, spas y profesionales afiliados',
     subcategories: [
       'Cosmética',
@@ -173,6 +173,84 @@ export const VERTICALS = [
       'Productora de Eventos',
       'Club / Centro Recreativo Aliado'
     ]
+  },
+  {
+    id: 'hoteles-hospedaje',
+    name: 'Hoteles y hospedaje',
+    shortName: 'Hoteles',
+    description: 'Hoteles, posadas, apartamentos temporales y alojamientos afiliados',
+    subcategories: [
+      'Hoteles',
+      'Posadas',
+      'Alquiler Temporal y Estancias'
+    ],
+    affiliateRoles: [
+      'Hotel Aliado',
+      'Posada Verificada',
+      'Anfitrión / Alojamiento Afiliado'
+    ]
+  },
+  {
+    id: 'restaurantes-comida-rapida',
+    name: 'Restaurantes y comida rápida',
+    shortName: 'Restaurantes',
+    description: 'Restaurantes, comida rápida, cafés y aliados gastronómicos aprobados',
+    subcategories: [
+      'Restaurantes',
+      'Comida rápida',
+      'Cafés, Postres y Delivery'
+    ],
+    affiliateRoles: [
+      'Restaurante Aliado',
+      'Local de Comida Rápida',
+      'Cafetería / Cocina Afiliada'
+    ]
+  },
+  {
+    id: 'turismo',
+    name: 'Turismo',
+    shortName: 'Turismo',
+    description: 'Rutas, excursiones, agencias, playas, montaña y experiencias turísticas',
+    subcategories: [
+      'Excursiones y Rutas',
+      'Agencias y Operadores',
+      'Destinos y Experiencias'
+    ],
+    affiliateRoles: [
+      'Operador Turístico Afiliado',
+      'Guía o Agencia Verificada'
+    ]
+  },
+  {
+    id: 'viajes-taxi',
+    name: 'Viajes y taxi',
+    shortName: 'Viajes y taxi',
+    description: 'Traslados privados, servicio de taxi, encomiendas y viajes interurbanos',
+    subcategories: [
+      'Servicio de taxi y traslados',
+      'Viajes interurbanos',
+      'Traslado ejecutivo y aeropuertos'
+    ],
+    affiliateRoles: [
+      'Conductor / Taxi Afiliado',
+      'Línea o Empresa de Traslados'
+    ]
+  },
+  {
+    id: 'reciclaje-ecologia',
+    name: 'Reciclaje y ecología',
+    shortName: 'Reciclaje',
+    description: 'Recolección responsable, aceites usados, reciclaje de materiales y soluciones ecológicas',
+    subcategories: [
+      'Reciclaje de aceites y fluidos',
+      'Centros de acopio y reciclaje',
+      'Productos ecológicos y sostenibles'
+    ],
+    affiliateRoles: [
+      'Centro de Reciclaje Aliado',
+      'Gestor Ambiental Verificado',
+      'Marca Ecológica Afiliada'
+    ]
   }
 ];
 
@@ -192,7 +270,7 @@ export const INITIAL_ALLIES_PROFILES = [
     subcategory: 'Lubricantes y fluidos',
     specialtyRole: 'Fabricante y Aliado Oficial',
     city: 'Maracay, Aragua',
-    bio: 'Fabricantes de refrigerantes orgánicos, lubricantes sintéticos y fluidos de alto rendimiento con Sello de Calidad ÁPEX.',
+    bio: 'Refrigerantes orgánicos, lubricantes sintéticos y fluidos de alto rendimiento con Sello de Calidad ÁPEX.',
     logoUrl: 'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=400&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80',
     phone: '+58 414-1470773',
@@ -207,7 +285,7 @@ export const INITIAL_ALLIES_PROFILES = [
       auditorNote: 'Aprobado por el equipo técnico ÁPEX: pruebas térmicas y de viscosidad certificadas.'
     },
     pointsEarnedByAlly: 1450,
-    followers: ['usr-1', 'usr-2']
+    followers: ['usr-1']
   },
   {
     id: 'ally-taller-master',
@@ -217,7 +295,7 @@ export const INITIAL_ALLIES_PROFILES = [
     subcategory: 'Talleres y afiliados',
     specialtyRole: 'Técnico Especialista en Mecánica y Electrónica Automotriz',
     city: 'Maracay, Aragua',
-    bio: 'Diagnóstico con escáner OEM, reconstrucción de motores, inyección electrónica y mantenimiento preventivo certificado.',
+    bio: 'Diagnóstico con escáner OEM, reconstrucción de motores, inyección electrónica y mantenimiento preventivo.',
     logoUrl: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=400&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80',
     phone: '+58 412-5559900',
@@ -242,7 +320,7 @@ export const INITIAL_ALLIES_PROFILES = [
     subcategory: 'Cosmética',
     specialtyRole: 'Spa Certificado y Tienda Cosmética',
     city: 'Maracay, Aragua',
-    bio: 'Cosmética dermatológica, accesorios y tratamientos faciales. Usa aquí tus puntos ganados en cualquier compra ÁPEX.',
+    bio: 'Cosmética dermatológica, accesorios y tratamientos faciales con respaldo ÁPEX.',
     logoUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1000&q=80',
     phone: '+58 412-4490122',
@@ -257,7 +335,7 @@ export const INITIAL_ALLIES_PROFILES = [
       auditorNote: 'Productos originales con registro sanitario aprobado.'
     },
     pointsEarnedByAlly: 820,
-    followers: ['usr-1']
+    followers: []
   },
   {
     id: 'ally-medicare-apex',
@@ -267,7 +345,7 @@ export const INITIAL_ALLIES_PROFILES = [
     subcategory: 'Alquiler de equipos médicos',
     specialtyRole: 'Clínicas, Insumos y Alquiler de Equipos Médicos',
     city: 'Maracay / Nacional',
-    bio: 'Insumos médicos certificados, venta y alquiler de concentradores de oxígeno, camas clínicas y médicos afiliados.',
+    bio: 'Insumos médicos, venta y alquiler de equipos médicos y atención clínica afiliada.',
     logoUrl: 'https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=400&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80',
     phone: '+58 414-9012233',
@@ -292,7 +370,7 @@ export const INITIAL_ALLIES_PROFILES = [
     subcategory: 'Técnicos y afiliados',
     specialtyRole: 'Albañilería, Electricidad, Plomería, Pintura y Reparación de Electrodomésticos',
     city: 'Maracay, Aragua',
-    bio: 'Equipo de técnicos profesionales afiliados con garantía ÁPEX en electricidad, plomería, albañilería, pintura y línea blanca.',
+    bio: 'Técnicos profesionales afiliados con garantía ÁPEX en albañilería, electricidad, plomería, pintura y electrodomésticos.',
     logoUrl: 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?auto=format&fit=crop&w=400&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=1000&q=80',
     phone: '+58 424-3109988',
@@ -319,7 +397,7 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
     subcategory: 'Lubricantes y fluidos',
     itemType: 'product',
     name: 'Refrigerante Orgánico Megafreeze OAT 50/50 (Galón)',
-    spec: 'Premezclado listo para usar • -37°C a 129°C',
+    spec: 'Premezclado • -37°C a 129°C',
     images: [
       'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80'
@@ -336,18 +414,18 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
       enabled: true,
       intervalDays: 180,
       intervalKm: 20000,
-      checkupQuestion: '¿Cómo se mantiene la temperatura de trabajo de tu motor tras aplicar Megafreeze OAT?',
+      checkupQuestion: '¿Cómo se mantiene la temperatura de tu motor con Megafreeze OAT?',
       reminderLabel: 'Revisión y reposición de refrigerante'
     },
     techSpecs: {
       gradeOrMaterial: 'Etilenglicol Orgánico OAT 50/50',
       normOrCert: 'ASTM D3306 / Libre de Silicatos',
-      presentation: 'Galón 3.785 Litros Sellado',
+      presentation: 'Galón 3.785 L',
       lifespan: 'Hasta 80,000 km o 3 años'
     },
     recommendation: {
-      idealFor: 'Radiadores de aluminio, motores modernos y uso exigente en clima cálido.',
-      difference: 'Evita cavitación en bomba de agua y protege contra corrosión interna.'
+      idealFor: 'Radiadores de aluminio y motores modernos.',
+      difference: 'Evita corrosión y cavitación con Sello de Calidad ÁPEX.'
     }
   },
   {
@@ -357,10 +435,9 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
     subcategory: 'Lubricantes y fluidos',
     itemType: 'product',
     name: 'Lubricante Full Sintético Megafreeze 5W-30 SP (4L)',
-    spec: 'API SP / ILSAC GF-6A • Protección Turbo',
+    spec: 'API SP / ILSAC GF-6A • 4 Litros',
     images: [
-      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1635437536607-b8572f443763?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80'
     ],
     price: 39.0,
     consumerPromoPercent: 8,
@@ -374,18 +451,18 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
       enabled: true,
       intervalDays: 120,
       intervalKm: 7500,
-      checkupQuestion: '¿Notas el arranque en frío más suave y silencioso después del cambio de aceite?',
-      reminderLabel: 'Próximo cambio de aceite y filtro (7,500 km)'
+      checkupQuestion: '¿Notas el motor suave y silencioso tras el cambio de aceite?',
+      reminderLabel: 'Próximo cambio de aceite y filtro'
     },
     techSpecs: {
       gradeOrMaterial: 'SAE 5W-30 100% Sintético',
       normOrCert: 'API SP / ILSAC GF-6A',
-      presentation: 'Garrafa 4 Litros con sello QR',
+      presentation: 'Garrafa 4 Litros',
       lifespan: '7,500 a 10,000 km'
     },
     recommendation: {
-      idealFor: 'Motores modernos a gasolina, inyección directa y turbocargados.',
-      difference: 'Mantiene película lubricante estable a altas temperaturas.'
+      idealFor: 'Motores a gasolina, inyección directa y turbo.',
+      difference: 'Alta estabilidad térmica y doble acumulación de puntos.'
     }
   },
   {
@@ -394,11 +471,10 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
     verticalId: 'belleza',
     subcategory: 'Cosmética',
     itemType: 'product',
-    name: 'Kit Hidratación Facial Vitamina C + Ácido Hialurónico',
-    spec: 'Fórmula dermatológica • Canjeable con puntos Ápex',
+    name: 'Kit Facial Vitamina C + Ácido Hialurónico',
+    spec: 'Cuidado facial • Uso diario',
     images: [
-      'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80'
     ],
     price: 28.0,
     consumerPromoPercent: 12,
@@ -412,18 +488,18 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
       enabled: true,
       intervalDays: 45,
       intervalKm: 0,
-      checkupQuestion: '¿Cómo sientes la luminosidad e hidratación de tu piel tras 2 semanas de uso?',
-      reminderLabel: 'Reposición de sérum hidratante'
+      checkupQuestion: '¿Cómo sientes la hidratación de tu piel tras usar el kit?',
+      reminderLabel: 'Reposición de cuidado facial'
     },
     techSpecs: {
-      gradeOrMaterial: 'Sérum Vitamina C 15% + Hialurónico puro',
-      normOrCert: 'Registro Sanitario Vigente • Cruelty Free',
-      presentation: 'Estuche 2 frascos gotero 30ml',
-      lifespan: 'Tratamiento para 45 días'
+      gradeOrMaterial: 'Vitamina C + Ácido Hialurónico',
+      normOrCert: 'Verificado por ÁPEX',
+      presentation: 'Estuche 2 piezas',
+      lifespan: '45 días'
     },
     recommendation: {
-      idealFor: 'Todo tipo de piel; ideal para uso diario antes del protector solar.',
-      difference: 'Producto verificado con sello de calidad ÁPEX; acepta cupones cruzados.'
+      idealFor: 'Rutina diaria de hidratación y luminosidad.',
+      difference: 'Canjea y acumula puntos en todo el ecosistema.'
     }
   },
   {
@@ -432,8 +508,8 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
     verticalId: 'medico',
     subcategory: 'Alquiler de equipos médicos',
     itemType: 'service',
-    name: 'Alquiler Concentrador de Oxígeno 5L (Plan Mensual)',
-    spec: 'Incluye cánula, humidificador y soporte técnico 24/7',
+    name: 'Alquiler Concentrador de Oxígeno 5L',
+    spec: 'Plan mensual • Soporte y accesorios',
     images: [
       'https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=800&q=80'
     ],
@@ -449,18 +525,18 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
       enabled: true,
       intervalDays: 30,
       intervalKm: 0,
-      checkupQuestion: '¿El equipo de oxígeno está funcionando silencioso y con flujo estable?',
-      reminderLabel: 'Renovación de alquiler o mantenimiento de filtros'
+      checkupQuestion: '¿El equipo opera con normalidad y flujo estable?',
+      reminderLabel: 'Revisión y renovación mensual'
     },
     techSpecs: {
-      gradeOrMaterial: 'Flujo continuo 1 a 5 L/min • Pureza 93% ±3%',
-      normOrCert: 'Certificación ISO 13485 • Desinfección Hospitalaria',
-      presentation: 'Equipo portátil con ruedas + accesorios nuevos',
-      lifespan: 'Mantenimiento preventivo incluido cada 30 días'
+      gradeOrMaterial: 'Flujo 1 a 5 L/min',
+      normOrCert: 'Calibrado y auditado ÁPEX',
+      presentation: 'Equipo portátil + cánula',
+      lifespan: 'Control cada 30 días'
     },
     recommendation: {
-      idealFor: 'Recuperación respiratoria en casa con respaldo médico verificado.',
-      difference: 'Entrega a domicilio y garantía de reemplazo inmediato por ÁPEX.'
+      idealFor: 'Soporte respiratorio en casa con respaldo médico.',
+      difference: 'Garantía y atención verificada.'
     }
   },
   {
@@ -469,8 +545,8 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
     verticalId: 'hogar',
     subcategory: 'Técnicos y afiliados',
     itemType: 'service',
-    name: 'Servicio Técnico Integral: Electricidad, Plomería o Electrodomésticos',
-    spec: 'Visita técnica evaluada • Albañilería, pintura y reparaciones',
+    name: 'Servicio Técnico: Electricidad, Plomería o Hogar',
+    spec: 'Visita evaluada • Albañilería, pintura y línea blanca',
     images: [
       'https://images.unsplash.com/photo-1581783898377-1c85bf937427?auto=format&fit=crop&w=800&q=80'
     ],
@@ -486,18 +562,18 @@ export const INITIAL_ECOSYSTEM_ITEMS = [
       enabled: true,
       intervalDays: 30,
       intervalKm: 0,
-      checkupQuestion: '¿Quedaste satisfecho con la puntualidad y acabado del técnico afiliado ÁPEX?',
-      reminderLabel: 'Revisión de garantía del servicio realizado'
+      checkupQuestion: '¿Quedaste conforme con el trabajo del técnico afiliado?',
+      reminderLabel: 'Control de garantía del servicio'
     },
     techSpecs: {
-      gradeOrMaterial: 'Mano de obra calificada con herramientas certificadas',
-      normOrCert: 'Garantía escrita ÁPEX de 30 a 90 días según obra',
-      presentation: 'Diagnóstico en sitio + presupuesto transparente',
-      lifespan: 'Respaldo directo del equipo evaluador ÁPEX'
+      gradeOrMaterial: 'Técnicos afiliados evaluados',
+      normOrCert: 'Garantía ÁPEX',
+      presentation: 'Diagnóstico y ejecución',
+      lifespan: 'Seguimiento post-servicio'
     },
     recommendation: {
-      idealFor: 'Fallas eléctricas, filtraciones, albañilería, pintura y reparación de neveras/lavadoras.',
-      difference: 'Todos los técnicos pasaron filtro de antecedentes y prueba técnica.'
+      idealFor: 'Reparaciones de hogar, electricidad, plomería y electrodomésticos.',
+      difference: 'Profesionales filtrados por el equipo ÁPEX.'
     }
   }
 ];
@@ -513,10 +589,11 @@ export const INITIAL_VERIFIED_POSTS = [
     itemName: 'Refrigerante Orgánico Megafreeze OAT 50/50 (Galón)',
     allyName: 'Megafreeze Venezuela',
     rating: 5,
-    caption: 'Lo puse hace 3 semanas en mi Corolla y en las colas del mediodía la aguja ni se mueve. Excelente calidad y el QR vino sellado.',
+    caption: 'Excelente resultado en tráfico pesado; la temperatura se mantiene estable.',
     mediaType: 'image',
     mediaUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80',
-    likes: ['usr-2'],
+    likes: [],
+    baseLikes: 12,
     createdAt: 'Hace 2 días'
   }
 ];
